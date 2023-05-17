@@ -1,0 +1,94 @@
+//
+// Copyright 2023 Wultra s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions
+// and limitations under the License.
+//
+
+import Foundation
+import WultraPowerAuthNetworking
+
+enum Endpoints {
+    enum Onboarding {
+        enum Start<TRequest: Codable> {
+            typealias EndpointType = WPNEndpointBasic<WPNRequest<StartOnboardingRequest<TRequest>>, WPNResponse<ProcessResponse>>
+            static var endpoint: EndpointType { .init(endpointURLPath: "/api/onboarding/start") }
+        }
+        enum Cancel {
+            typealias EndpointType = WPNEndpointBasic<WPNRequest<ProcessRequest>, WPNResponseBase>
+            static var endpoint: EndpointType { .init(endpointURLPath: "/api/onboarding/cleanup") }
+        }
+        enum ResendOTP {
+            typealias EndpointType = WPNEndpointBasic<WPNRequest<ProcessRequest>, WPNResponseBase>
+            static var endpoint: EndpointType { .init(endpointURLPath: "/api/onboarding/otp/resend") }
+        }
+        enum GetStatus {
+            typealias EndpointType = WPNEndpointBasic<WPNRequest<ProcessRequest>, WPNResponse<ProcessResponse>>
+            static var endpoint: EndpointType { .init(endpointURLPath: "/api/onboarding/status") }
+        }
+    }
+    enum Identification {
+        enum GetStatus {
+            typealias EndpointType = WPNEndpointSignedWithToken<WPNRequest<EmptyRequest>, WPNResponse<IdentityStatusResponse>>
+            static var endpoint: EndpointType { .init(endpointURLPath: "/api/identity/status", tokenName: "possession_universal") }
+        }
+        enum Init {
+            typealias EndpointType = WPNEndpointSigned<WPNRequest<IdentityInitRequest>, WPNResponseBase>
+            static var endpoint: EndpointType { .init(endpointURLPath: "/api/identity/init", uriId: "/api/identity/init") }
+        }
+        enum Cancel {
+            typealias EndpointType = WPNEndpointSigned<WPNRequest<ProcessRequest>, WPNResponseBase>
+            static var endpoint: EndpointType { .init(endpointURLPath: "/api/identity/cleanup", uriId: "/api/identity/cleanup") }
+        }
+        enum ConsentText {
+            typealias EndpointType = WPNEndpointSignedWithToken<WPNRequest<ConsentTextRequest>, WPNResponse<ConsentTextResponse>>
+            static var endpoint: EndpointType { .init(endpointURLPath: "/api/identity/consent/text", tokenName: "possession_universal") }
+        }
+        enum ConsentApprove {
+            typealias EndpointType = WPNEndpointSigned<WPNRequest<ConsentApproveRequest>, WPNResponseBase>
+            static var endpoint: EndpointType { .init(endpointURLPath: "/api/identity/consent/approve", uriId: "/api/identity/consent/approve") }
+        }
+        enum DocumentScanSdkInit {
+            typealias EndpointType = WPNEndpointSigned<WPNRequest<SDKInitRequest>, WPNResponse<SDKInitResponse>>
+            static var endpoint: EndpointType { .init(endpointURLPath: "/api/identity/document/init-sdk", uriId: "/api/identity/document/init-sdk") }
+        }
+        enum SubmitDocuments {
+            typealias EndpointType = WPNEndpointSignedWithToken<WPNRequest<DocumentSubmitRequest>, WPNResponseBase>
+            static var endpoint: EndpointType { .init(endpointURLPath: "/api/identity/document/submit", tokenName: "possession_universal") }
+        }
+        enum DocumentsStatus {
+            typealias EndpointType = WPNEndpointSignedWithToken<WPNRequest<ProcessRequest>, WPNResponse<DocumentStatusResponse>>
+            static var endpoint: EndpointType { .init(endpointURLPath: "/api/identity/document/status", tokenName: "possession_universal") }
+        }
+        enum PresenceCheckInit {
+            typealias EndpointType = WPNEndpointSigned<WPNRequest<ProcessRequest>, WPNResponse<PresenceCheckInitResponse>>
+            static var endpoint: EndpointType { .init(endpointURLPath: "/api/identity/presence-check/init", uriId: "/api/identity/presence-check/init") }
+        }
+        enum PresenceCheckSubmit {
+            typealias EndpointType = WPNEndpointSigned<WPNRequest<ProcessRequest>, WPNResponseBase>
+            static var endpoint: EndpointType { .init(endpointURLPath: "/api/identity/presence-check/submit", uriId: "/api/identity/presence-check/submit") }
+        }
+        enum ResendOTP {
+            typealias EndpointType = WPNEndpointSigned<WPNRequest<ProcessRequest>, WPNResponseBase>
+            static var endpoint: EndpointType { .init(endpointURLPath: "/api/identity/otp/resend", uriId: "/api/identity/otp/resend") }
+        }
+        enum VerifyOTP {
+            typealias EndpointType = WPNEndpointBasic<WPNRequest<VerifyOTPRequest>, WPNResponse<VerifyOTPResponse>>
+            static var endpoint: EndpointType { .init(endpointURLPath: "/api/identity/otp/verify") }
+        }
+    }
+}
+
+/// Some Endpoints require empty JSON object, so this is it.
+struct EmptyRequest: Codable {
+    
+}

@@ -1,2 +1,1 @@
-# identity-activation-apple
-Wultra identity Activation
+# Wultra Digital Onboarding for Apple Platforms

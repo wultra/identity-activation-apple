@@ -1,0 +1,72 @@
+//
+// Copyright 2023 Wultra s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions
+// and limitations under the License.
+//
+
+import Foundation
+
+/// Image that can be send to the backend for Identity Verification
+public class WDODocumentFile {
+    
+    /// Image to be uploaded.
+    public var data: Data
+    /// Image signature.
+    public var dataSignature: String?
+    /// Type of the document
+    public let type: WDODocumentType
+    /// Side of the document (nil if the document is one-sided or only one side is expected)
+    public let side: WDODocumentSide
+    /// In case of reupload
+    public let originalDocumentId: String?
+    
+    /// Image that can be send to the backend for Identity Verification
+    /// - Parameters:
+    ///   - data: Image data to be uploaded.
+    ///   - dataSignature: Image signature
+    ///   - type: Type of the document
+    ///   - side: Side of the document (nil if the document is one-sided or only one side is expected)
+    ///   - originalDocumentId: Original document ID In case of a reupload
+    public init(data: Data, dataSignature: String? = nil, type: WDODocumentType, side: WDODocumentSide, originalDocumentId: String? = nil) {
+        self.data = data
+        self.dataSignature = dataSignature
+        self.type = type
+        self.side = side
+        self.originalDocumentId = originalDocumentId
+    }
+}
+
+public enum WDODocumentType: String {
+    /// National ID card
+    case idCard
+    /// Passport
+    case passport
+    // Driving license
+    case driversLicense
+    
+    public var sides: [WDODocumentSide] {
+        switch self {
+        case .idCard: return [.front, .back]
+        case .passport: return [.front]
+        case .driversLicense: return [.front]
+        }
+    }
+}
+
+/// Side of the file
+public enum WDODocumentSide: String {
+    /// Front side of an document. Usually the one with the picture
+    case front
+    /// Back side of an document
+    case back
+}
