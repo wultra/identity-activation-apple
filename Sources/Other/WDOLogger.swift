@@ -39,27 +39,27 @@ public class WDOLogger {
     
     /// Prints simple message to the debug console.
     static func print(_ message: @autoclosure () -> String) {
-        #if DEBUG || WPN_ENABLE_LOGGING
+        #if DEBUG || WDO_ENABLE_LOGGING
         if verboseLevel == .all {
-            Swift.print("[WPN] \(message().limit(characterLimit))")
+            Swift.print("[WDO] \(message().limit(characterLimit))")
         }
         #endif
     }
 
     /// Prints warning message to the debug console.
     static func warning(_ message: @autoclosure () -> String) {
-        #if DEBUG || WPN_ENABLE_LOGGING
+        #if DEBUG || WDO_ENABLE_LOGGING
         if verboseLevel.rawValue >= VerboseLevel.warnings.rawValue {
-            Swift.print("[WPN] WARNING: \(message().limit(characterLimit))")
+            Swift.print("[WDO] WARNING: \(message().limit(characterLimit))")
         }
         #endif
     }
     
     /// Prints error message to the debug console.
     static func error(_ message: @autoclosure () -> String) {
-        #if DEBUG || WPN_ENABLE_LOGGING
+        #if DEBUG || WDO_ENABLE_LOGGING
         if verboseLevel != .off {
-            Swift.print("[WPN] ERROR: \(message().limit(characterLimit))")
+            Swift.print("[WDO] ERROR: \(message().limit(characterLimit))")
         }
         #endif
     }
