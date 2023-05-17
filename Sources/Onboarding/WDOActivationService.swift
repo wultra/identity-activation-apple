@@ -242,7 +242,7 @@ public class WDOActivationService {
     #if ENABLE_ONBOARDING_DEMO
     public func getOTP(completion: @escaping (Result<String, WPNError>) -> Void) {
         guard let processId else {
-            completion(.failure(WPNError(reason: .wdo_onboarding_notRunning)))
+            completion(.failure(WPNError(reason: .wdo_activation_notRunning)))
             return
         }
         api.onboarding.getOTP(processId: processId, type: .activation) { result in
