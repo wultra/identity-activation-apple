@@ -22,7 +22,7 @@ public class WDOVerificationService {
     
     // MARK: Public Properties
     
-    public weak var delegate: WDOVerificaitonServiceDelegate?
+    public weak var delegate: WDOVerificationServiceDelegate?
     
     public var acceptLanguage: String {
         get {
@@ -423,7 +423,7 @@ public class WDOVerificationService {
 
 // MARK: - Other public APIs
 
-public protocol WDOVerificaitonServiceDelegate: AnyObject {
+public protocol WDOVerificationServiceDelegate: AnyObject {
     func activationStatusChanged(status: PowerAuthActivationStatus)
 }
 
