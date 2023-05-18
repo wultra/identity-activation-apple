@@ -81,25 +81,25 @@ enum IdentityVerificationPhase: String, Decodable {
 /// Document submit request
 struct DocumentSubmitRequest: Codable {
     /// ProcesID of the onboarding process
-    public let processId: String
+    let processId: String
     /// Base64 encoded zip with documents (pictures)
-    public let data: String
+    let data: String
     /// Is it resubmit?
-    public let resubmit: Bool
+    let resubmit: Bool
     /// ZIP documents metadata (for each document inside)
-    public let documents: [DocumentSubmitFile]
+    let documents: [DocumentSubmitFile]
 }
 
 /// Metadata for file inside ZIP (in `DocumentSubmitRequest.data`).
 struct DocumentSubmitFile: Codable {
     /// Name of the file (with path)
-    public let filename: String
+    let filename: String
     /// Type of the document
-    public let type: DocumentSubmitFileType
+    let type: DocumentSubmitFileType
     /// Side of the document (for example front side of the ID card)
-    public let side: DocumentSubmitFileSide?
+    let side: DocumentSubmitFileSide?
     /// Original document ID in case of re-upload
-    public let originalDocumentId: String?
+    let originalDocumentId: String?
 }
 
 /// Types of available documents
@@ -158,9 +158,9 @@ enum DocumentStatus: String, Codable {
 /// Status of the documents
 struct DocumentStatusResponse: Codable {
     /// Overall status
-    public let status: DocumentStatus
+    let status: DocumentStatus
     /// Status for each document.
-    public let documents: [Document]
+    let documents: [Document]
 }
 
 /// Presence check init response
@@ -182,9 +182,9 @@ struct PresenceCheckInitResponse: Decodable {
 /// Request with OTP verification
 struct VerifyOTPRequest: Codable {
     /// ID of the process
-    public let processId: String
+    let processId: String
     /// OTP code
-    public let otpCode: String
+    let otpCode: String
 }
 
 /// Response of the OTP verify
@@ -203,9 +203,9 @@ struct VerifyOTPResponse: Codable {
 
 struct SDKInitRequest: Codable {
     /// ID of the process
-    public let processId: String
+    let processId: String
     /// Attributes
-    public let attributes: SDKInitRequestAttributes
+    let attributes: SDKInitRequestAttributes
 }
 
 struct SDKInitRequestAttributes: Codable {
@@ -228,24 +228,11 @@ struct SDKInitResponse: Codable {
 }
 
 struct SDKInitResponseAttributes: Codable {
-    
-    private struct DynamicCodingKeys: CodingKey {
-        let stringValue: String
-        init?(stringValue: String) {
-            self.stringValue = stringValue
-        }
 
-        // We don't expect intValue
-        var intValue: Int?
-        init?(intValue: Int) {
-            return nil
-        }
-    }
-
-    public let responseToken: String?
+    let responseToken: String?
     
-    public init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: DynamicCodingKeys.self)
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: JSONCodingKeys.self)
         // This is pretty big oversimplification, but in general, we expect 1 string property with an unknown key (property name).
         // If this wont fit the customer needs, we gonna need to provide this API as generic or make it provider-based for
         // different SDK providers.
@@ -254,8 +241,8 @@ struct SDKInitResponseAttributes: Codable {
 }
 
 struct ConsentTextRequest: Codable {
-    public let processId: String
-    public var consentType: String = "GDPR"
+    let processId: String
+    var consentType: String = "GDPR"
 }
 
 struct ConsentTextResponse: Codable {

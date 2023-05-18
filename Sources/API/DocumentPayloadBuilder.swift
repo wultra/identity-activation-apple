@@ -23,7 +23,7 @@ class DocumentPayloadBuilder {
     /// Builds the request for the `submitDocuments` call.
     /// - Parameters:
     ///   - processId: ID of the process
-    ///   - images: Images to upload
+    ///   - files: Documents to upload
     /// - Returns: Request
     /// - Throws: Various errors during the document processing.
      static func build(processId: String, files: [WDODocumentFile]) throws -> DocumentSubmitRequest {

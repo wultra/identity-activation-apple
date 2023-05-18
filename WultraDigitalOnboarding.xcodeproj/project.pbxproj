@@ -117,8 +117,8 @@
 			isa = PBXGroup;
 			children = (
 				DC75BBA42A1521B0009C2901 /* Endpoints.swift */,
-				DC75BBA62A1521B0009C2901 /* OnboardingObjects.swift */,
 				DC75BBA82A1521B0009C2901 /* DemoEndpoints.swift */,
+				DC75BBA62A1521B0009C2901 /* OnboardingObjects.swift */,
 				DC75BBA92A1521B0009C2901 /* IdentityObjects.swift */,
 			);
 			path = Model;
@@ -146,7 +146,6 @@
 		DC75BBCB2A1525F3009C2901 /* Other */ = {
 			isa = PBXGroup;
 			children = (
-				DC75BB9B2A1521B0009C2901 /* WDOLogger.swift */,
 				DC75BB9C2A1521B0009C2901 /* KeychainWrapper.swift */,
 				DC75BBAB2A1521B0009C2901 /* Utils.swift */,
 			);
@@ -159,6 +158,7 @@
 				DC75BBAC2A1521B0009C2901 /* Onboarding */,
 				DC75BB9D2A1521B0009C2901 /* Verification */,
 				DC75BBA72A1521B0009C2901 /* WDOError.swift */,
+				DC75BB9B2A1521B0009C2901 /* WDOLogger.swift */,
 			);
 			name = Public;
 			sourceTree = "<group>";
