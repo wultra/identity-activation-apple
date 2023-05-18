@@ -89,7 +89,7 @@ public class WDOVerificationService {
     
     // MARK: - Public API
     
-    public func whatNext(completion: @escaping (Result<WDOVerificationState, WPNError>) -> Void) {
+    public func whatNext(completion: @escaping (Result<WDOVerificationState, Fail>) -> Void) {
         
         api.identityVerification.getStatus { [weak self] result in
             
@@ -151,7 +151,7 @@ public class WDOVerificationService {
                 case .failed:
                     completion(.success(.failed))
                 case .rejected:
-                    completion(.success(.rejected))
+                    completion(.success(.endstate))
                 case .success:
                     completion(.success(.success))
                 }
@@ -162,7 +162,7 @@ public class WDOVerificationService {
         }
     }
     
-    public func consentGet(completion: @escaping (Result<Success, WPNError>) -> Void) {
+    public func consentGet(completion: @escaping (Result<Success, Fail>) -> Void) {
         guard let processId = guardProcessId(completion) else {
             return
         }
@@ -175,7 +175,7 @@ public class WDOVerificationService {
         }
     }
     
-    public func consentApprove(completion: @escaping (Result<Success, WPNError>) -> Void) {
+    public func consentApprove(completion: @escaping (Result<Success, Fail>) -> Void) {
         guard let processId = guardProcessId(completion) else {
             return
         }
@@ -194,7 +194,7 @@ public class WDOVerificationService {
         }
     }
     
-    public func documentsInitSDK(challenge: String, completion: @escaping (Result<String, WPNError>) -> Void) {
+    public func documentsInitSDK(challenge: String, completion: @escaping (Result<String, Fail>) -> Void) {
         
         guard let processId = guardProcessId(completion) else {
             return
@@ -209,13 +209,13 @@ public class WDOVerificationService {
         }
     }
     
-    public func documentsSetSelectedTypes(types: [WDODocumentType], completion: @escaping (Result<Success, WPNError>) -> Void) {
+    public func documentsSetSelectedTypes(types: [WDODocumentType], completion: @escaping (Result<Success, Fail>) -> Void) {
         let process = WDOVerificationScanProcess(types: types)
         cachedProcess = process
         completion(.success(.scanDocument(process)))
     }
     
-    public func documentsSubmit(files: [WDODocumentFile], progressCallback: @escaping (Double) -> Void, completion: @escaping (Result<Success, WPNError>) -> Void) {
+    public func documentsSubmit(files: [WDODocumentFile], progressCallback: @escaping (Double) -> Void, completion: @escaping (Result<Success, Fail>) -> Void) {
         
         guard let processId = guardProcessId(completion) else {
             return
@@ -237,7 +237,7 @@ public class WDOVerificationService {
         }
     }
     
-    public func presenceCheckInit(completion: @escaping (Result<[String: Any], WPNError>) -> Void) {
+    public func presenceCheckInit(completion: @escaping (Result<[String: Any], Fail>) -> Void) {
         
         guard let processId = guardProcessId(completion) else {
             return
@@ -252,7 +252,7 @@ public class WDOVerificationService {
         }
     }
     
-    public func presenceCheckSubmit(completion: @escaping (Result<Success, WPNError>) -> Void) {
+    public func presenceCheckSubmit(completion: @escaping (Result<Success, Fail>) -> Void) {
         
         guard let processId = guardProcessId(completion) else {
             return
@@ -267,7 +267,7 @@ public class WDOVerificationService {
         }
     }
     
-    public func restartVerification(completion: @escaping (Result<Success, WPNError>) -> Void) {
+    public func restartVerification(completion: @escaping (Result<Success, Fail>) -> Void) {
         
         guard let processId = guardProcessId(completion) else {
             return
@@ -282,7 +282,7 @@ public class WDOVerificationService {
         }
     }
     
-    public func cancelWholeProcess(completion: @escaping (Result<Void, WPNError>) -> Void) {
+    public func cancelWholeProcess(completion: @escaping (Result<Void, Fail>) -> Void) {
         
         guard let processId = guardProcessId(completion) else {
             return
@@ -306,7 +306,7 @@ public class WDOVerificationService {
         public let remainingAttempts: Int
     }
     
-    public func verifyOTP(otp: String, completion: @escaping (Result<SuccessWithResult<VerifyOTPResult>, WPNError>) -> Void) {
+    public func verifyOTP(otp: String, completion: @escaping (Result<SuccessWithResult<VerifyOTPResult>, Fail>) -> Void) {
         
         guard let processId = guardProcessId(completion) else {
             return
@@ -332,7 +332,7 @@ public class WDOVerificationService {
         }
     }
     
-    public func resendOTP(completion: @escaping (Result<Void, WPNError>) -> Void) {
+    public func resendOTP(completion: @escaping (Result<Void, Fail>) -> Void) {
         
         guard let processId = guardProcessId(completion) else {
             return
@@ -385,28 +385,50 @@ public class WDOVerificationService {
         public let response: T
     }
     
+    public class Fail: Error {
+        
+        public let cause: WPNError
+        public let state: WDOVerificationState?
+        
+        init(_ cause: WPNError) {
+            self.cause = cause
+            switch cause.restApiError?.errorCode {
+            case .onboardingFailed:
+                state = .endstate
+            case .identityVerificationFailed:
+                state = .failed
+            case .onboardingLimitReached:
+                state = .endstate
+            case .presenceCheckLimitEached, .identityVerificationLimitReached:
+                state = .failed
+            default:
+                state = nil
+            }
+        }
+    }
+    
     // MARK: - Private helper methods
     
-    private func guardProcessId<T>(_ completion: (Result<T, WPNError>) -> Void) -> String? {
+    private func guardProcessId<T>(_ completion: (Result<T, Fail>) -> Void) -> String? {
         guard let processId = lastStatus?.processId else {
-            completion(.failure(.init(reason: .wdo_verification_missingStatus)))
+            completion(.failure(.init(.init(reason: .wdo_verification_missingStatus))))
             return nil
         }
         return processId
     }
     
-    private func processError<T>(_ error: WPNError, _ completion: @escaping (Result<T, WPNError>) -> Void) {
-        if error.networkIsNotReachable == false {
+    private func processError<T>(_ error: WPNError, _ completion: @escaping (Result<T, Fail>) -> Void) {
+        if error.networkIsNotReachable == false || error.restApiError?.errorCode == .authenticationFailure {
             api.networking.powerAuth.fetchActivationStatus { [weak self] status, _ in
                 if let status, status.state != .active {
                     self?.delegate?.activationStatusChanged(status: status)
-                    completion(.failure(.init(reason: .wdo_verification_activationNotActive, error: error)))
+                    completion(.failure(.init(.init(reason: .wdo_verification_activationNotActive, error: error))))
                 } else {
-                    completion(.failure(error))
+                    completion(.failure(.init(error)))
                 }
             }
         } else {
-            completion(.failure(error))
+            completion(.failure(.init(error)))
         }
     }
     
@@ -436,7 +458,7 @@ public extension WPNErrorReason {
 
 // MARK: - Private extensions and other
 
-private extension Result where Success == WDOVerificationService.Success, Failure == WPNError {
+private extension Result where Success == WDOVerificationService.Success, Failure == WDOVerificationService.Fail {
     static func success(_ nextStep: WDOVerificationState) -> Self {
         return .success(WDOVerificationService.Success(nextStep))
     }

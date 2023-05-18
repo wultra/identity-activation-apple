@@ -95,9 +95,9 @@
 		DC75BB9D2A1521B0009C2901 /* Verification */ = {
 			isa = PBXGroup;
 			children = (
+				DC75BBA02A1521B0009C2901 /* WDOVerificationService.swift */,
 				DC75BB9E2A1521B0009C2901 /* WDOVerificationState.swift */,
 				DC75BB9F2A1521B0009C2901 /* WDOVerificationScanProcess.swift */,
-				DC75BBA02A1521B0009C2901 /* WDOVerificationService.swift */,
 				DC75BBCE2A152855009C2901 /* WDODocumentFile.swift */,
 			);
 			path = Verification;

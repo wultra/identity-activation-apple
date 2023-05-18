@@ -51,7 +51,7 @@ public enum WDOVerificationState: CustomStringConvertible {
     case presenceCheck
     case otp
     case failed
-    case rejected
+    case endstate
     case success
     
     public var description: String {
@@ -64,7 +64,7 @@ public enum WDOVerificationState: CustomStringConvertible {
         case .presenceCheck: return "presenceCheck"
         case .otp: return "otp"
         case .failed: return "failed"
-        case .rejected: return "rejected"
+        case .endstate: return "endstate"
         case .success: return "success"
         }
     }
