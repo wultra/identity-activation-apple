@@ -151,7 +151,7 @@ public class WDOVerificationService {
                 case .failed:
                     completion(.success(.failed))
                 case .rejected:
-                    completion(.success(.endstate))
+                    completion(.success(.endstate(.rejected)))
                 case .success:
                     completion(.success(.success))
                 }
@@ -394,11 +394,11 @@ public class WDOVerificationService {
             self.cause = cause
             switch cause.restApiError?.errorCode {
             case .onboardingFailed:
-                state = .endstate
+                state = .endstate(.other)
             case .identityVerificationFailed:
                 state = .failed
             case .onboardingLimitReached:
-                state = .endstate
+                state = .endstate(.limitReached)
             case .presenceCheckLimitEached, .identityVerificationLimitReached:
                 state = .failed
             default:

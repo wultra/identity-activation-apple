@@ -43,6 +43,20 @@ public enum WDOVerificationState: CustomStringConvertible {
         }
     }
     
+    public enum EndstateReason: CustomStringConvertible {
+        case rejected
+        case limitReached
+        case other
+        
+        public var description: String {
+            switch self {
+            case .limitReached: return "limitReached"
+            case .other: return "other"
+            case .rejected: return "rejected"
+            }
+        }
+    }
+    
     case intro
     case consent(_ html: String)
     case documentsToScanSelect
@@ -51,7 +65,7 @@ public enum WDOVerificationState: CustomStringConvertible {
     case presenceCheck
     case otp
     case failed
-    case endstate
+    case endstate(_ reason: EndstateReason)
     case success
     
     public var description: String {
