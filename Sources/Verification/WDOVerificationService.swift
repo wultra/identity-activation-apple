@@ -348,7 +348,7 @@ public class WDOVerificationService {
     }
     
     #if ENABLE_ONBOARDING_DEMO
-    public func getOTP(completion: @escaping (Result<String, WPNError>) -> Void) {
+    public func getOTP(completion: @escaping (Result<String, Fail>) -> Void) {
         
         guard let processId = guardProcessId(completion) else {
             return
