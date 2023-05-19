@@ -46,3 +46,10 @@ public extension PowerAuthSDK {
         }
     }
 }
+
+public extension PowerAuthActivationStatus {
+    internal var activationFlags: [String] { customObject?["activationFlags"] as? [String] ?? [] }
+    var needVerification: Bool { verificationPending || verificationInProgress }
+    var verificationPending: Bool { activationFlags.contains("VERIFICATION_PENDING") }
+    var verificationInProgress: Bool { activationFlags.contains("VERIFICATION_IN_PROGRESS") }
+}

@@ -21,7 +21,7 @@
 		DC75BBBB2A1521B0009C2901 /* DocumentPayloadBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC75BBAA2A1521B0009C2901 /* DocumentPayloadBuilder.swift */; };
 		DC75BBBC2A1521B0009C2901 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC75BBAB2A1521B0009C2901 /* Utils.swift */; };
 		DC75BBBD2A1521B0009C2901 /* WDOActivationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC75BBAD2A1521B0009C2901 /* WDOActivationService.swift */; };
-		DC75BBBE2A1521B0009C2901 /* PowerAuth+WIAOTPActivation.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC75BBAE2A1521B0009C2901 /* PowerAuth+WIAOTPActivation.swift */; };
+		DC75BBBE2A1521B0009C2901 /* PowerAuthExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC75BBAE2A1521B0009C2901 /* PowerAuthExtensions.swift */; };
 		DC75BBC32A152344009C2901 /* WultraPowerAuthNetworking.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DC75BBC02A152344009C2901 /* WultraPowerAuthNetworking.xcframework */; };
 		DC75BBC52A152344009C2901 /* PowerAuth2.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DC75BBC12A152344009C2901 /* PowerAuth2.xcframework */; };
 		DC75BBC72A152344009C2901 /* PowerAuthCore.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DC75BBC22A152344009C2901 /* PowerAuthCore.xcframework */; };
@@ -44,7 +44,7 @@
 		DC75BBAA2A1521B0009C2901 /* DocumentPayloadBuilder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DocumentPayloadBuilder.swift; sourceTree = "<group>"; };
 		DC75BBAB2A1521B0009C2901 /* Utils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
 		DC75BBAD2A1521B0009C2901 /* WDOActivationService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WDOActivationService.swift; sourceTree = "<group>"; };
-		DC75BBAE2A1521B0009C2901 /* PowerAuth+WIAOTPActivation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "PowerAuth+WIAOTPActivation.swift"; sourceTree = "<group>"; };
+		DC75BBAE2A1521B0009C2901 /* PowerAuthExtensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PowerAuthExtensions.swift; sourceTree = "<group>"; };
 		DC75BBC02A152344009C2901 /* WultraPowerAuthNetworking.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = WultraPowerAuthNetworking.xcframework; path = Carthage/Build/WultraPowerAuthNetworking.xcframework; sourceTree = "<group>"; };
 		DC75BBC12A152344009C2901 /* PowerAuth2.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = PowerAuth2.xcframework; path = Carthage/Build/PowerAuth2.xcframework; sourceTree = "<group>"; };
 		DC75BBC22A152344009C2901 /* PowerAuthCore.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = PowerAuthCore.xcframework; path = Carthage/Build/PowerAuthCore.xcframework; sourceTree = "<group>"; };
@@ -128,7 +128,6 @@
 			isa = PBXGroup;
 			children = (
 				DC75BBAD2A1521B0009C2901 /* WDOActivationService.swift */,
-				DC75BBAE2A1521B0009C2901 /* PowerAuth+WIAOTPActivation.swift */,
 			);
 			path = Onboarding;
 			sourceTree = "<group>";
@@ -157,6 +156,7 @@
 			children = (
 				DC75BBAC2A1521B0009C2901 /* Onboarding */,
 				DC75BB9D2A1521B0009C2901 /* Verification */,
+				DC75BBAE2A1521B0009C2901 /* PowerAuthExtensions.swift */,
 				DC75BBA72A1521B0009C2901 /* WDOError.swift */,
 				DC75BB9B2A1521B0009C2901 /* WDOLogger.swift */,
 			);
@@ -278,7 +278,7 @@
 				DC75BBB12A1521B0009C2901 /* WDOVerificationState.swift in Sources */,
 				DC75BBBC2A1521B0009C2901 /* Utils.swift in Sources */,
 				DC75BBAF2A1521B0009C2901 /* WDOLogger.swift in Sources */,
-				DC75BBBE2A1521B0009C2901 /* PowerAuth+WIAOTPActivation.swift in Sources */,
+				DC75BBBE2A1521B0009C2901 /* PowerAuthExtensions.swift in Sources */,
 				DC75BBB42A1521B0009C2901 /* Networking.swift in Sources */,
 				DC75BBB32A1521B0009C2901 /* WDOVerificationService.swift in Sources */,
 				DC75BBCF2A152855009C2901 /* WDODocumentFile.swift in Sources */,
