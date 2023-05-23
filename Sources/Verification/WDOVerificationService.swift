@@ -312,7 +312,7 @@ public class WDOVerificationService {
                     if data.remainingAttempts > 0 && data.expired == false {
                         completion(.success(.otp(data.remainingAttempts)))
                     } else {
-                        completion(.success(.failed))
+                        completion(.failure(.init(.init(reason: .wdo_verification_otpFailed))))
                     }
                 }
             }.onError {
@@ -433,6 +433,8 @@ public extension WPNErrorReason {
     static let wdo_verification_activationNotActive = WPNErrorReason(rawValue: "wdo_verification_activationNotActive")
     /// Wultra Digital Onboarding verificaiton status is unknown. Please make sure that the status was sucessfully fetched before calling any other method
     static let wdo_verification_missingStatus = WPNErrorReason(rawValue: "wdo_verification_missingStatus")
+    /// Wultra Digital Onboarding verificaiton status is unknown. Please make sure that the status was sucessfully fetched before calling any other method
+    static let wdo_verification_otpFailed = WPNErrorReason(rawValue: "wdo_verification_otpFailed")
 }
 
 // MARK: - Private extensions and other
