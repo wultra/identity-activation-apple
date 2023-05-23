@@ -27,9 +27,7 @@ class KeychainWrapper {
     /// AccessGroup is used for the kSecAttrAccessGroup property to identify which Keychain Access Group this entry belongs to. This allows you to use the KeychainWrapper with shared keychain access between different applications.
     private (set) var accessGroup: String?
     
-    private static let defaultServiceName: String = {
-        return Bundle.main.bundleIdentifier ?? "wdokw"
-    }()
+    private static let defaultServiceName = "wdokw"
 
     private convenience init() {
         self.init(serviceName: KeychainWrapper.defaultServiceName)

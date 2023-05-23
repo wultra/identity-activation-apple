@@ -18,8 +18,8 @@ import Foundation
 
 public enum WDOVerificationState: CustomStringConvertible {
     
-    public enum AskLaterReason: CustomStringConvertible {
-        case unknown
+    public enum ProcessingItem: CustomStringConvertible {
+        case other
         case documentUpload
         case documentVerification
         case documentAccepted
@@ -30,7 +30,7 @@ public enum WDOVerificationState: CustomStringConvertible {
         
         public var description: String {
             switch self {
-            case .unknown: return "unknown"
+            case .other: return "other"
             case .documentUpload: return "documentUpload"
             case .documentVerification: return "documentVerification"
             case .documentAccepted: return "documentAccepted"
@@ -61,9 +61,9 @@ public enum WDOVerificationState: CustomStringConvertible {
     case consent(_ html: String)
     case documentsToScanSelect
     case scanDocument(_ process: WDOVerificationScanProcess)
-    case askLater(_ reason: AskLaterReason)
+    case processing(_ item: ProcessingItem)
     case presenceCheck
-    case otp
+    case otp(_ remainingAttempts: Int?)
     case failed
     case endstate(_ reason: EndstateReason)
     case success
@@ -74,7 +74,7 @@ public enum WDOVerificationState: CustomStringConvertible {
         case .consent: return "consent"
         case .documentsToScanSelect: return "documentsToScanSelect"
         case .scanDocument: return "scanDocument"
-        case .askLater(let reason): return "askLater:\(reason)"
+        case .processing(let reason): return "askLater:\(reason)"
         case .presenceCheck: return "presenceCheck"
         case .otp: return "otp"
         case .failed: return "failed"
@@ -84,10 +84,10 @@ public enum WDOVerificationState: CustomStringConvertible {
     }
 }
 
-extension WDOVerificationState.AskLaterReason {
+extension WDOVerificationState.ProcessingItem {
     static func from(_ reason: VerificationStatus.Reason) -> Self {
         switch reason {
-        case .unknown: return .unknown
+        case .unknown: return .other
         case .documentUpload: return .documentUpload
         case .documentVerification: return .documentVerification
         case .documentAccepted: return .documentAccepted

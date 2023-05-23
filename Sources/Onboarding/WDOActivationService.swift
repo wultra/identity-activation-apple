@@ -92,7 +92,7 @@ public class WDOActivationService {
                 return
             }
             guard let processId else {
-                completion(.failure(.init(reason: .wdo_activation_inProgress)))
+                completion(.failure(.init(reason: .wdo_activation_notRunning)))
                 return
             }
             guard verifyCanStartProcess(completion) else {

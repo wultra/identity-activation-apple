@@ -89,7 +89,7 @@ public class WDOVerificationService {
     
     // MARK: - Public API
     
-    public func whatNext(completion: @escaping (Result<WDOVerificationState, Fail>) -> Void) {
+    public func status(completion: @escaping (Result<WDOVerificationState, Fail>) -> Void) {
         
         api.identityVerification.getStatus { [weak self] result in
             
@@ -123,7 +123,7 @@ public class WDOVerificationService {
                                     completion(.success(.scanDocument(cachedProcess)))
                                 } else if documents.contains(where: { $0.action == .wait }) {
                                     // TODO: really verification?
-                                    completion(.success(.askLater(.documentVerification)))
+                                    completion(.success(.processing(.documentVerification)))
                                 } else if documents.isEmpty {
                                     completion(.success(.scanDocument(cachedProcess)))
                                 } else {
@@ -145,9 +145,9 @@ public class WDOVerificationService {
                 case .presenceCheck:
                     completion(.success(.presenceCheck))
                 case .statusCheck(let reason):
-                    completion(.success(.askLater(.from(reason))))
+                    completion(.success(.processing(.from(reason))))
                 case .otp:
-                    completion(.success(.otp))
+                    completion(.success(.otp(nil)))
                 case .failed:
                     completion(.success(.failed))
                 case .rejected:
@@ -226,7 +226,7 @@ public class WDOVerificationService {
                 let data = try DocumentPayloadBuilder.build(processId: processId, files: files)
                 self.api.identityVerification.submitDocuments(data: data, progressCallback: progressCallback) { result in
                     result.onSuccess {
-                        completion(.success(.askLater(.documentUpload)))
+                        completion(.success(.processing(.documentUpload)))
                     }.onError {
                         self.processError($0, completion)
                     }
@@ -260,7 +260,7 @@ public class WDOVerificationService {
         
         api.identityVerification.presenceCheckSubmit(processId: processId) { result in
             result.onSuccess {
-                completion(.success(.askLater(.verifyingPresence)))
+                completion(.success(.processing(.verifyingPresence)))
             }.onError {
                 self.processError($0, completion)
             }
@@ -297,16 +297,7 @@ public class WDOVerificationService {
         }
     }
     
-    public struct VerifyOTPResult {
-        /// Was OTP verified?
-        public let verified: Bool
-        /// Is OTP expired
-        public let expired: Bool
-        /// How many attempts are remaining
-        public let remainingAttempts: Int
-    }
-    
-    public func verifyOTP(otp: String, completion: @escaping (Result<SuccessWithResult<VerifyOTPResult>, Fail>) -> Void) {
+    public func verifyOTP(otp: String, completion: @escaping (Result<Success, Fail>) -> Void) {
         
         guard let processId = guardProcessId(completion) else {
             return
@@ -314,18 +305,16 @@ public class WDOVerificationService {
         
         api.identityVerification.verifyOTP(processId: processId, otp: otp) { result in
             result.onSuccess { data in
-                completion(
-                    .success(
-                        .init(
-                            .askLater(.unknown),
-                            .init(
-                                verified: data.verified,
-                                expired: data.expired,
-                                remainingAttempts: data.remainingAttempts
-                            )
-                        )
-                    )
-                )
+                
+                if data.verified {
+                    completion(.success(.processing(.other)))
+                } else {
+                    if data.remainingAttempts > 0 && data.expired == false {
+                        completion(.success(.otp(data.remainingAttempts)))
+                    } else {
+                        completion(.success(.failed))
+                    }
+                }
             }.onError {
                 self.processError($0, completion)
             }
@@ -373,16 +362,6 @@ public class WDOVerificationService {
         }
         
         public let state: WDOVerificationState
-    }
-    
-    public class SuccessWithResult<T>: Success {
-        
-        init(_ state: WDOVerificationState, _ response: T) {
-            self.response = response
-            super.init(state)
-        }
-        
-        public let response: T
     }
     
     public class Fail: Error {
