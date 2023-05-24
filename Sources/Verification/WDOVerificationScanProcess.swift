@@ -16,15 +16,58 @@
 
 import UIKit
 
+/// Verification Scan Process that describes which documents needs to be scanned.
 public class WDOVerificationScanProcess {
     
+    /// Documents that needs to be scanned
     public let documents: [WDOScannedDocument]
     
-    public var documentToScan: WDOScannedDocument? { documents.first(where: { $0.serverResult == nil || $0.serverResult!.contains(where: { sr in sr.errors != nil && !sr.errors!.isEmpty }) }) }
+    /// Which document should be scanned next. `nil` when all documents are uploaded
+    public var nextDocumentToScan: WDOScannedDocument? { documents.first { $0.uploadState != .accepted }}
     
-    init(types: [WDODocumentType]) {
+    // internal init
+    internal init(types: [WDODocumentType]) {
         self.documents = types.map { .init($0) }
     }
+}
+
+/// Document that needs to be scanned during process
+public class WDOScannedDocument {
+    
+    public enum UploadState {
+        /// Document was not uploaded yet
+        case notUploaded
+        /// Document was accepted
+        case accepted
+        /// Document was rejected and needs to be reuploaded
+        case rejected
+    }
+    
+    /// Type of the document
+    public let type: WDODocumentType
+    
+    /// Upload state
+    public var uploadState: UploadState {
+        guard let serverResult else {
+            return .notUploaded
+        }
+        if serverResult.contains(where: { $0.errors?.isEmpty == false }) {
+            return .rejected
+        } else {
+            return .accepted
+        }
+    }
+    
+    internal var serverResult: [Document]?
+    
+    fileprivate init(_ type: WDODocumentType) {
+        self.type = type
+    }
+}
+
+// MARK: - Internal/Private
+
+extension WDOVerificationScanProcess {
     
     convenience init?(cacheData: String) {
         let split = cacheData.split(separator: ":").map { String($0) }
@@ -63,24 +106,5 @@ public class WDOVerificationScanProcess {
     
     func dataForCache() -> String {
         return "\(CacheVersion.v1.rawValue):\(documents.map { $0.type.rawValue }.joined(separator: ","))"
-    }
-}
-
-public class WDOScannedDocument {
-    
-    public let type: WDODocumentType
-    public var resubmit: Bool { serverResult != nil }
-    fileprivate var serverResult: [Document]?
-    public var uploadedSides: [UploadedSide] {
-        return serverResult?.map { UploadedSide(side: .from(apiType: $0.side), serverId: $0.id)} ?? []
-    }
-    
-    fileprivate init(_ type: WDODocumentType) {
-        self.type = type
-    }
-    
-    public struct UploadedSide {
-        public let side: WDODocumentSide
-        public let serverId: String
     }
 }

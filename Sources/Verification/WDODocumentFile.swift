@@ -18,7 +18,6 @@ import Foundation
 
 /// Image that can be send to the backend for Identity Verification
 public class WDODocumentFile {
-    
     /// Image to be uploaded.
     public var data: Data
     /// Image signature.
@@ -30,6 +29,11 @@ public class WDODocumentFile {
     /// In case of reupload
     public let originalDocumentId: String?
     
+    public convenience init(scannedDocument: WDOScannedDocument, data: Data, dataSignature: String? = nil, side: WDODocumentSide) {
+        let originalDocumentId = scannedDocument.serverResult?.first { $0.side == side.apiType }?.id
+        self.init(data: data, dataSignature: dataSignature, type: scannedDocument.type, side: side, originalDocumentId: originalDocumentId)
+    }
+    
     /// Image that can be send to the backend for Identity Verification
     /// - Parameters:
     ///   - data: Image data to be uploaded.
@@ -37,12 +41,18 @@ public class WDODocumentFile {
     ///   - type: Type of the document
     ///   - side: Side of the document (nil if the document is one-sided or only one side is expected)
     ///   - originalDocumentId: Original document ID In case of a reupload
-    public init(data: Data, dataSignature: String? = nil, type: WDODocumentType, side: WDODocumentSide, originalDocumentId: String? = nil) {
+    init(data: Data, dataSignature: String? = nil, type: WDODocumentType, side: WDODocumentSide, originalDocumentId: String? = nil) {
         self.data = data
         self.dataSignature = dataSignature
         self.type = type
         self.side = side
         self.originalDocumentId = originalDocumentId
+    }
+}
+
+public extension WDOScannedDocument {
+    func forUpload(side: WDODocumentSide, data: Data, dataSignature: String? = nil) -> WDODocumentFile {
+        return WDODocumentFile(scannedDocument: self, data: data, dataSignature: dataSignature, side: side)
     }
 }
 

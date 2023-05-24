@@ -19,12 +19,27 @@ import UIKit
 import PowerAuth2
 import WultraPowerAuthNetworking
 
+/// Digital Onboarding Activation Service.
+///
+/// Service that can activate PowerAuthSDK instance by user weak credentials (like his login and birthdate) + OTP.
+///
+/// This service operations against `enrollment-onboarding-server` and you need to configure networking service with URL of this service.
 public class WDOActivationService {
     
     // MARK: - Public Properties
     
+    /// If the activation process is in progress.
+    ///
+    /// Note that when this proeprty is `true` it can be already discontinued on the server.
+    /// Calling `status` in such case is recommended.
     public var hasActiveProcess: Bool { processId != nil }
     
+    /// Accept language for the outgoing requests headers.
+    /// Default value is "en".
+    ///
+    /// Standard RFC "Accept-Language" https://tools.ietf.org/html/rfc7231#section-5.3.5
+    /// Response texts are based on this setting. For example when "de" is set, server
+    /// will return error texts and other in german (if available).
     public var acceptLanguage: String {
         get {
             return api.networking.acceptLanguage
@@ -62,6 +77,11 @@ public class WDOActivationService {
     
     // MARK: - Public initializers
     
+    /// Creates service instance
+    /// - Parameters:
+    ///   - powerAuth: Configured PowerAuthSDK instance. This instance needs to be wihout valid activation otherwise you'll get errors.
+    ///   - config: Configuration of the networking service
+    ///   - canRestoreSession: If the activation session can be restored (when app restarts). `true` by default
     public convenience init(powerAuth: PowerAuthSDK, config: WPNConfig, canRestoreSession: Bool = true) throws {
         try self.init(
             networking: WPNNetworkingService(powerAuth: powerAuth, config: config, serviceName: "WDOActivationNetworking"),
@@ -69,6 +89,10 @@ public class WDOActivationService {
         )
     }
     
+    /// Creates service instance
+    /// - Parameters:
+    ///   - networking: Networking service for the onboarding server with configured PowerAuthSDK instance that needs to be wihout valid activation otherwise you'll get errors.
+    ///   - canRestoreSession: If the activation session can be restored (when app restarts). `true` by default
     public convenience init(networking: WPNNetworkingService, canRestoreSession: Bool = true) throws {
         self.init(api: try .init(networking: networking), canRestoreSession: canRestoreSession)
     }
@@ -85,6 +109,8 @@ public class WDOActivationService {
     
     // MARK: - Public API
     
+    /// Retrieves status of the onboarding activation
+    /// - Parameter completion: Callback with the status or an error.
     public func status(completion: @escaping (Result<Status, WPNError>) -> Void) {
         serialized(completion) { [weak self] completion in
             guard let self else {
@@ -108,6 +134,10 @@ public class WDOActivationService {
         }
     }
     
+    /// Starts onboarding activation with provided credentials
+    /// - Parameters:
+    ///   - credentials: Codable object with credentials. Which credentials are needed should be provided by a system/backend provider.
+    ///   - completion: Callback with the result.
     public func start<T: Codable>(
         credentials: T,
         completion: @escaping (Result<Void, WPNError>) -> Void
@@ -135,6 +165,10 @@ public class WDOActivationService {
         }
     }
     
+    /// Cancels the process
+    /// - Parameters:
+    ///   - forceCancel: When true, the process will be canceled in the SDK even when fails on backend. `true` by default
+    ///   - completion: Callback with the result.
     public func cancel(
         forceCancel: Bool = true,
         completion: @escaping (Result<Void, WPNError>) -> Void
@@ -167,12 +201,15 @@ public class WDOActivationService {
         }
     }
     
+    /// Clears the stored data (without networking call).
     public func clear() {
         oq.addOperation { [weak self] in
             self?.processId = nil
         }
     }
     
+    /// Requests OTP resend
+    /// - Parameter completion: Callback with the result.
     public func resendOTP(completion: @escaping (Result<Void, WPNError>) -> Void) {
         
         serialized(completion) { [weak self] completion in
@@ -198,6 +235,11 @@ public class WDOActivationService {
         }
     }
     
+    /// Activates PowerAuthSDK instance that was passed in the initializer.
+    /// - Parameters:
+    ///   - otp: OTP provided by user
+    ///   - activationName: Name of the activation. Device name by default
+    ///   - completion: Callback with the result.
     public func activate(
         otp: String,
         activationName: String = UIDevice.current.name,
@@ -240,6 +282,8 @@ public class WDOActivationService {
     }
     
     #if ENABLE_ONBOARDING_DEMO
+    /// Demo endpoint available only in Wultra Demo systems
+    /// - Parameter completion: Callback with the result.
     public func getOTP(completion: @escaping (Result<String, WPNError>) -> Void) {
         guard let processId else {
             completion(.failure(WPNError(reason: .wdo_activation_notRunning)))
@@ -278,10 +322,15 @@ public class WDOActivationService {
     
     // MARK: - Status Enum
     
+    /// Status of the Onboarding Activation
     public enum Status: CustomStringConvertible {
+        /// Activation is in the progress
         case activationInProgress
+        /// Activation was already finished, not waiting for the verification
         case verificationInProgress
+        /// Activation failed
         case failed
+        /// Both activation and verification was finished
         case finished
         
         public var description: String {
@@ -308,10 +357,13 @@ public extension WPNErrorReason {
 }
 
 public extension WPNError {
+    
+    /// When users enters wrong OTP during Onboarding Activation process, the error contains additional remaining attempts.
     var onboardingOtpRemainingAttempts: Int? {
         (userInfo["PowerAuthErrorInfoKey_AdditionalInfo"] as? NSDictionary)?["remainingAttempts"] as? Int
     }
     
+    /// If user should be allowed to repeat Onboarding Activation OTP step.
     var allowOnboardingOtpRetry: Bool {
         if let remainingAttempts = onboardingOtpRemainingAttempts {
             return remainingAttempts > 0

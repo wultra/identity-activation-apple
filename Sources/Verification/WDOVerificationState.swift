@@ -16,17 +16,27 @@
 
 import Foundation
 
+/// State which should be presented to the user
 public enum WDOVerificationState: CustomStringConvertible {
     
+    /// Reason why is server processing
     public enum ProcessingItem: CustomStringConvertible {
+        /// Reason cannot be specified
         case other
+        /// Documents are being uploaded to a internal systems
         case documentUpload
+        /// Documents are being verified
         case documentVerification
+        /// Documents were accepted and we're waiting for a process change
         case documentAccepted
+        /// Uploaded are being cross-checked if the're issues for the same person.
         case documentsCrossVerification
-        case clientVerification
-        case clientAccepted
+        /// Verifying presence of the user infront of the phone (selfie verification).
         case verifyingPresence
+        /// Client data provided are being verified by the system.
+        case clientVerification
+        /// Client data were accepted and we're waiting for a process change
+        case clientAccepted
         
         public var description: String {
             switch self {
@@ -43,9 +53,13 @@ public enum WDOVerificationState: CustomStringConvertible {
         }
     }
     
+    /// Why the process ended in non-recoverable state
     public enum EndstateReason: CustomStringConvertible {
+        /// The verification was rejected
         case rejected
+        /// Limit of repeat tries was reached
         case limitReached
+        /// Other reason
         case other
         
         public var description: String {
@@ -56,16 +70,25 @@ public enum WDOVerificationState: CustomStringConvertible {
             }
         }
     }
-    
+    /// Show verification introuction screen
     case intro
+    /// Show approve/cancel user consent
     case consent(_ html: String)
+    /// Show document selection to the user
     case documentsToScanSelect
+    /// User should scan documents
     case scanDocument(_ process: WDOVerificationScanProcess)
+    /// The system is processing data
     case processing(_ item: ProcessingItem)
+    /// User should be presented with a presence check
     case presenceCheck
+    /// User should enter OTP
     case otp(_ remainingAttempts: Int?)
+    /// Verification failed and can be restarted
     case failed
+    /// Verification is canceled and user needs to start again with an activation
     case endstate(_ reason: EndstateReason)
+    /// Verification was sucessfully ended
     case success
     
     public var description: String {
