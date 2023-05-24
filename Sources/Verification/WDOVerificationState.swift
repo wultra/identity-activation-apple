@@ -97,7 +97,7 @@ public enum WDOVerificationState: CustomStringConvertible {
         case .consent: return "consent"
         case .documentsToScanSelect: return "documentsToScanSelect"
         case .scanDocument: return "scanDocument"
-        case .processing(let reason): return "askLater:\(reason)"
+        case .processing(let reason): return "processing:\(reason)"
         case .presenceCheck: return "presenceCheck"
         case .otp: return "otp"
         case .failed: return "failed"
