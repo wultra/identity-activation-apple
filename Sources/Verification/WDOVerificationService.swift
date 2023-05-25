@@ -121,15 +121,23 @@ public class WDOVerificationService {
             switch result {
             case .success(let response):
                 
-                self.processStatusChange(response: response)
+                switch response.status {
+                case .failed, .rejected, .notInitialized, .accepted:
+                    cachedProcess = nil
+                default:
+                    break
+                }
                 self.lastStatus = response
                 
                 D.print("Verification status handling. Status \(response.status.rawValue), phase \(response.phase?.rawValue ?? "nil").")
                 switch VerificationStatus.from(status: response) {
                 case .intro:
-                    completion(.success(.intro))
+                    self.markCompleted(.success(.intro), completion)
                 case .documentScan:
-                    self.api.identityVerification.documentsStatus(processId: response.processId) { docsResult in
+                    self.api.identityVerification.documentsStatus(processId: response.processId) { [weak self] docsResult in
+                        guard let self else {
+                            return
+                        }
                         switch docsResult {
                         case .success(let docsResponse):
                             
@@ -139,46 +147,46 @@ public class WDOVerificationService {
     
                                 cachedProcess.feed(docsResponse.documents)
                                 if documents.contains(where: { $0.action == .error }) || documents.contains(where: { $0.errors != nil && !$0.errors!.isEmpty }) {
-                                    completion(.success(.scanDocument(cachedProcess)))
+                                    self.markCompleted(.success(.scanDocument(cachedProcess)), completion)
                                 } else if documents.allSatisfy({ $0.action == .proceed }) {
-                                    completion(.success(.scanDocument(cachedProcess)))
+                                    self.markCompleted(.success(.scanDocument(cachedProcess)), completion)
                                 } else if documents.contains(where: { $0.action == .wait }) {
                                     // TODO: really verification?
-                                    completion(.success(.processing(.documentVerification)))
+                                    self.markCompleted(.success(.processing(.documentVerification)), completion)
                                 } else if documents.isEmpty {
-                                    completion(.success(.scanDocument(cachedProcess)))
+                                    self.markCompleted(.success(.scanDocument(cachedProcess)), completion)
                                 } else {
                                     // TODO: is this ok?
-                                    completion(.success(.failed))
+                                    self.markCompleted(.success(.failed), completion)
                                 }
                             } else {
                                 if documents.isEmpty {
-                                    completion(.success(.documentsToScanSelect))
+                                    self.markCompleted(.success(.documentsToScanSelect), completion)
                                 } else {
-                                    completion(.success(.failed))
+                                    self.markCompleted(.success(.failed), completion)
                                 }
                             }
                             
                         case .failure(let error):
-                            self.processError(error, completion)
+                            self.markCompleted(error, completion)
                         }
                     }
                 case .presenceCheck:
-                    completion(.success(.presenceCheck))
+                    self.markCompleted(.success(.presenceCheck), completion)
                 case .statusCheck(let reason):
-                    completion(.success(.processing(.from(reason))))
+                    self.markCompleted(.success(.processing(.from(reason))), completion)
                 case .otp:
-                    completion(.success(.otp(nil)))
+                    self.markCompleted(.success(.otp(nil)), completion)
                 case .failed:
-                    completion(.success(.failed))
+                    self.markCompleted(.success(.failed), completion)
                 case .rejected:
-                    completion(.success(.endstate(.rejected)))
+                    self.markCompleted(.success(.endstate(.rejected)), completion)
                 case .success:
-                    completion(.success(.success))
+                    self.markCompleted(.success(.success), completion)
                 }
             case .failure(let error):
                 self.lastStatus = nil
-                self.processError(error, completion)
+                self.markCompleted(error, completion)
             }
         }
     }
@@ -189,11 +197,14 @@ public class WDOVerificationService {
         guard let processId = guardProcessId(completion) else {
             return
         }
-        api.identityVerification.getConsentText(processId: processId) { result in
+        api.identityVerification.getConsentText(processId: processId) { [weak self] result in
+            guard let self = self else {
+                return
+            }
             result.onSuccess {
-                completion(.success(.consent($0)))
+                self.markCompleted(.success(.consent($0)), completion)
             }.onError {
-                self.processError($0, completion)
+                self.markCompleted($0, completion)
             }
         }
     }
@@ -204,17 +215,23 @@ public class WDOVerificationService {
         guard let processId = guardProcessId(completion) else {
             return
         }
-        api.identityVerification.resolveConsent(processId: processId, approved: true) { result in
+        api.identityVerification.resolveConsent(processId: processId, approved: true) { [weak self] result in
+            guard let self = self else {
+                return
+            }
             result.onSuccess {
-                self.api.identityVerification.start(processId: processId) { startResult in
+                self.api.identityVerification.start(processId: processId) { [weak self] startResult in
+                    guard let self = self else {
+                        return
+                    }
                     startResult.onSuccess {
-                        completion(.success(.documentsToScanSelect))
+                        self.markCompleted(.success(.documentsToScanSelect), completion)
                     }.onError {
-                        self.processError($0, completion)
+                        self.markCompleted($0, completion)
                     }
                 }
             }.onError {
-                self.processError($0, completion)
+                self.markCompleted($0, completion)
             }
         }
     }
@@ -229,11 +246,14 @@ public class WDOVerificationService {
             return
         }
         
-        api.identityVerification.initScanSDK(processId: processId, challenge: challenge) { result in
+        api.identityVerification.initScanSDK(processId: processId, challenge: challenge) { [weak self] result in
+            guard let self = self else {
+                return
+            }
             result.onSuccess {
-                completion(.success($0))
+                self.markCompleted(.success($0), completion)
             }.onError {
-                self.processError($0, completion)
+                self.markCompleted($0, completion)
             }
         }
     }
@@ -245,7 +265,7 @@ public class WDOVerificationService {
     public func documentsSetSelectedTypes(types: [WDODocumentType], completion: @escaping (Result<Success, Fail>) -> Void) {
         let process = WDOVerificationScanProcess(types: types)
         cachedProcess = process
-        completion(.success(.scanDocument(process)))
+        markCompleted(.success(.scanDocument(process)), completion)
     }
     
     /// Upload document files to the server
@@ -262,15 +282,18 @@ public class WDOVerificationService {
         DispatchQueue.global(qos: .userInitiated).async {
             do {
                 let data = try DocumentPayloadBuilder.build(processId: processId, files: files)
-                self.api.identityVerification.submitDocuments(data: data, progressCallback: progressCallback) { result in
+                self.api.identityVerification.submitDocuments(data: data, progressCallback: progressCallback) { [weak self] result in
+                    guard let self = self else {
+                        return
+                    }
                     result.onSuccess {
-                        completion(.success(.processing(.documentUpload)))
+                        self.markCompleted(.success(.processing(.documentUpload)), completion)
                     }.onError {
-                        self.processError($0, completion)
+                        self.markCompleted($0, completion)
                     }
                 }
             } catch {
-                self.processError(.wrap(.unknown, error), completion)
+                self.markCompleted(.wrap(.unknown, error), completion)
             }
         }
     }
@@ -283,11 +306,14 @@ public class WDOVerificationService {
             return
         }
         
-        api.identityVerification.presenceCheckInit(processId: processId) { result in
+        api.identityVerification.presenceCheckInit(processId: processId) { [weak self] result in
+            guard let self = self else {
+                return
+            }
             result.onSuccess {
-                completion(.success($0.attributes))
+                self.markCompleted(.success($0.attributes), completion)
             }.onError {
-                self.processError($0, completion)
+                self.markCompleted($0, completion)
             }
         }
     }
@@ -300,11 +326,14 @@ public class WDOVerificationService {
             return
         }
         
-        api.identityVerification.presenceCheckSubmit(processId: processId) { result in
+        api.identityVerification.presenceCheckSubmit(processId: processId) { [weak self] result in
+            guard let self = self else {
+                return
+            }
             result.onSuccess {
-                completion(.success(.processing(.verifyingPresence)))
+                self.markCompleted(.success(.processing(.verifyingPresence)), completion)
             }.onError {
-                self.processError($0, completion)
+                self.markCompleted($0, completion)
             }
         }
     }
@@ -317,11 +346,14 @@ public class WDOVerificationService {
             return
         }
         
-        api.identityVerification.cleanup(processId: processId) { result in
+        api.identityVerification.cleanup(processId: processId) { [weak self] result in
+            guard let self = self else {
+                return
+            }
             result.onSuccess {
-                completion(.success(.intro))
+                self.markCompleted(.success(.intro), completion)
             }.onError {
-                self.processError($0, completion)
+                self.markCompleted($0, completion)
             }
         }
     }
@@ -334,11 +366,14 @@ public class WDOVerificationService {
             return
         }
         
-        api.onboarding.cancel(processId: processId) { result in
+        api.onboarding.cancel(processId: processId) { [weak self] result in
+            guard let self = self else {
+                return
+            }
             result.onSuccess {
-                completion(.success(()))
+                self.markCompleted(.success(()), completion)
             }.onError {
-                self.processError($0, completion)
+                self.markCompleted($0, completion)
             }
         }
     }
@@ -353,20 +388,24 @@ public class WDOVerificationService {
             return
         }
         
-        api.identityVerification.verifyOTP(processId: processId, otp: otp) { result in
+        api.identityVerification.verifyOTP(processId: processId, otp: otp) { [weak self] result in
+            
+            guard let self = self else {
+                return
+            }
+            
             result.onSuccess { data in
-                
                 if data.verified {
-                    completion(.success(.processing(.other)))
+                    self.markCompleted(.success(.processing(.other)), completion)
                 } else {
                     if data.remainingAttempts > 0 && data.expired == false {
-                        completion(.success(.otp(data.remainingAttempts)))
+                        self.markCompleted(.success(.otp(data.remainingAttempts)), completion)
                     } else {
-                        completion(.failure(.init(.init(reason: .wdo_verification_otpFailed))))
+                        self.markCompleted(.failure(.init(.init(reason: .wdo_verification_otpFailed))), completion)
                     }
                 }
             }.onError {
-                self.processError($0, completion)
+                self.markCompleted($0, completion)
             }
         }
     }
@@ -381,9 +420,9 @@ public class WDOVerificationService {
         
         api.identityVerification.resendOTP(processId: processId) { result in
             result.onSuccess {
-                completion(.success(()))
+                self.markCompleted(.success(()), completion)
             }.onError {
-                self.processError($0, completion)
+                self.markCompleted($0, completion)
             }
         }
     }
@@ -399,9 +438,9 @@ public class WDOVerificationService {
         
         api.onboarding.getOTP(processId: processId, type: .userVerification) { result in
             result.onSuccess {
-                completion(.success($0))
+                self.markCompleted(.success($0), completion)
             }.onError {
-                self.processError($0, completion)
+                self.markCompleted($0, completion)
             }
         }
     }
@@ -451,35 +490,37 @@ public class WDOVerificationService {
     
     private func guardProcessId<T>(_ completion: (Result<T, Fail>) -> Void) -> String? {
         guard let processId = lastStatus?.processId else {
-            completion(.failure(.init(.init(reason: .wdo_verification_missingStatus))))
+            markCompleted(.failure(.init(.init(reason: .wdo_verification_missingStatus))), completion)
             return nil
         }
         return processId
     }
     
-    private func processError<T>(_ error: WPNError, _ completion: @escaping (Result<T, Fail>) -> Void) {
+    private func markCompleted<T>(_ error: WPNError, _ completion: @escaping (Result<T, Fail>) -> Void) {
         if error.networkIsNotReachable == false || error.restApiError?.errorCode == .authenticationFailure {
             api.networking.powerAuth.fetchActivationStatus { [weak self] status, _ in
+                
+                guard let self else {
+                    return
+                }
+                
                 if let status, status.state != .active {
-                    self?.delegate?.powerAuthActivationStatusChanged(status: status)
-                    completion(.failure(.init(.init(reason: .wdo_verification_activationNotActive, error: error))))
+                    self.delegate?.powerAuthActivationStatusChanged(self, status: status)
+                    self.markCompleted(.failure(.init(.init(reason: .wdo_verification_activationNotActive, error: error))), completion)
                 } else {
-                    completion(.failure(.init(error)))
+                    self.markCompleted(.failure(.init(error)), completion)
                 }
             }
         } else {
-            completion(.failure(.init(error)))
+            markCompleted(.failure(.init(error)), completion)
         }
     }
     
-    private func processStatusChange(response: IdentityStatusResponse) {
-        switch response.status {
-        case .failed, .rejected, .notInitialized, .accepted:
-            cachedProcess = nil
-        default:
-            // do nothing
-            break
+    private func markCompleted<T>(_ result: Result<T, Fail>, _ completion: (Result<T, Fail>) -> Void) {
+        if let state = (result.success as? Success)?.state ?? result.error?.state {
+            delegate?.verificationStatusChanged(self, status: state)
         }
+        completion(result)
     }
 }
 
@@ -490,7 +531,10 @@ public protocol WDOVerificationServiceDelegate: AnyObject {
     /// Called when PowerAuth activation status changed.
     ///
     /// Note that this happends only when error is returned in some of the Verification endpoints and this error indicates PowerAuth status change.
-    func powerAuthActivationStatusChanged(status: PowerAuthActivationStatus)
+    func powerAuthActivationStatusChanged(_ sender: WDOVerificationService, status: PowerAuthActivationStatus)
+    
+    /// Called when state of the verificatoin has changed.
+    func verificationStatusChanged(_ sender: WDOVerificationService, status: WDOVerificationState)
 }
 
 public extension WPNErrorReason {
