@@ -39,15 +39,16 @@ public enum WDOVerificationState: CustomStringConvertible {
         case clientAccepted
         
         public var description: String {
+            let prefix = "WDOVerificationState.ProcessingItem"
             switch self {
-            case .other: return "other"
-            case .documentUpload: return "documentUpload"
-            case .documentVerification: return "documentVerification"
-            case .documentAccepted: return "documentAccepted"
-            case .documentsCrossVerification: return "documentsCrossVerification"
-            case .clientVerification: return "clientVerification"
-            case .clientAccepted: return "clientAccepted"
-            case .verifyingPresence: return "verifyingPresence"
+            case .other: return "\(prefix).other"
+            case .documentUpload: return "\(prefix).documentUpload"
+            case .documentVerification: return "\(prefix).documentVerification"
+            case .documentAccepted: return "\(prefix).documentAccepted"
+            case .documentsCrossVerification: return "\(prefix).documentsCrossVerification"
+            case .clientVerification: return "\(prefix).clientVerification"
+            case .clientAccepted: return "\(prefix).clientAccepted"
+            case .verifyingPresence: return "\(prefix).verifyingPresence"
                 
             }
         }
@@ -63,10 +64,11 @@ public enum WDOVerificationState: CustomStringConvertible {
         case other
         
         public var description: String {
+            let prefix = "WDOVerificationState.EndstateReason"
             switch self {
-            case .limitReached: return "limitReached"
-            case .other: return "other"
-            case .rejected: return "rejected"
+            case .limitReached: return "\(prefix).limitReached"
+            case .other: return "\(prefix).other"
+            case .rejected: return "\(prefix).rejected"
             }
         }
     }
@@ -92,17 +94,18 @@ public enum WDOVerificationState: CustomStringConvertible {
     case success
     
     public var description: String {
+        let prefix = "WDOVerificationState"
         switch self {
-        case .intro: return "intro"
-        case .consent: return "consent"
-        case .documentsToScanSelect: return "documentsToScanSelect"
-        case .scanDocument: return "scanDocument"
-        case .processing(let reason): return "processing:\(reason)"
-        case .presenceCheck: return "presenceCheck"
-        case .otp: return "otp"
-        case .failed: return "failed"
-        case .endstate: return "endstate"
-        case .success: return "success"
+        case .intro: return "\(prefix).intro"
+        case .consent: return "\(prefix).consent"
+        case .documentsToScanSelect: return "\(prefix).documentsToScanSelect"
+        case .scanDocument: return "\(prefix).scanDocument"
+        case .processing(let reason): return "\(prefix).processing:\(reason)"
+        case .presenceCheck: return "\(prefix).presenceCheck"
+        case .otp: return "\(prefix).otp"
+        case .failed: return "\(prefix).failed"
+        case .endstate: return "\(prefix).endstate"
+        case .success: return "\(prefix).success"
         }
     }
 }

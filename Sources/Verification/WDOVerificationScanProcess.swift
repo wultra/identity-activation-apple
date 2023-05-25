@@ -16,13 +16,13 @@
 
 import UIKit
 
-/// Verification Scan Process that describes which documents needs to be scanned.
+/// Verification Scan Process that describes which documents needs to be scanned and uploaded
 public class WDOVerificationScanProcess {
     
     /// Documents that needs to be scanned
     public let documents: [WDOScannedDocument]
     
-    /// Which document should be scanned next. `nil` when all documents are uploaded
+    /// Which document should be scanned next. `nil` when all documents are uploaded and accepted
     public var nextDocumentToScan: WDOScannedDocument? { documents.first { $0.uploadState != .accepted }}
     
     // internal init
@@ -34,6 +34,7 @@ public class WDOVerificationScanProcess {
 /// Document that needs to be scanned during process
 public class WDOScannedDocument {
     
+    /// State of the document on the server
     public enum UploadState {
         /// Document was not uploaded yet
         case notUploaded

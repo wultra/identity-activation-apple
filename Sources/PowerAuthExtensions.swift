@@ -49,7 +49,10 @@ public extension PowerAuthSDK {
 
 public extension PowerAuthActivationStatus {
     internal var activationFlags: [String] { customObject?["activationFlags"] as? [String] ?? [] }
+    /// When true, activation needs verification via `WDOVerificationService`
     var needVerification: Bool { verificationPending || verificationInProgress }
+    /// Identity Verification is waiting to start.
     var verificationPending: Bool { activationFlags.contains("VERIFICATION_PENDING") }
+    /// Identity Verification was already started by the user
     var verificationInProgress: Bool { activationFlags.contains("VERIFICATION_IN_PROGRESS") }
 }

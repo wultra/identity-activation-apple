@@ -16,7 +16,7 @@
 
 import Foundation
 
-/// Helper error class
+/// Error class for unexpected or unhadled errors in the SDK
 public class WDOError: Error {
     
     let localizedDescription: String

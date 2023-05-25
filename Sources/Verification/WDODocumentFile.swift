@@ -29,6 +29,12 @@ public class WDODocumentFile {
     /// In case of reupload
     public let originalDocumentId: String?
     
+    /// Image that can be send to the backend for Identity Verification
+    /// - Parameters:
+    ///   - scannedDocument: Document which we're uploading
+    ///   - data: Image raw data
+    ///   - dataSignature: Signature of the image data. Optinal, `nil` by default
+    ///   - side: Side of the document which the image captures
     public convenience init(scannedDocument: WDOScannedDocument, data: Data, dataSignature: String? = nil, side: WDODocumentSide) {
         let originalDocumentId = scannedDocument.serverResult?.first { $0.side == side.apiType }?.id
         self.init(data: data, dataSignature: dataSignature, type: scannedDocument.type, side: side, originalDocumentId: originalDocumentId)
@@ -51,11 +57,19 @@ public class WDODocumentFile {
 }
 
 public extension WDOScannedDocument {
-    func forUpload(side: WDODocumentSide, data: Data, dataSignature: String? = nil) -> WDODocumentFile {
+    
+    /// Creates image that can be send to the backend for Identity Verification
+    /// - Parameters:
+    ///   - side: Side of the document which the image captures
+    ///   - data: Image raw data
+    ///   - dataSignature: Signature of the image data. Optinal, `nil` by default
+    /// - Returns: Document file for upload
+    func createFileForUpload(side: WDODocumentSide, data: Data, dataSignature: String? = nil) -> WDODocumentFile {
         return WDODocumentFile(scannedDocument: self, data: data, dataSignature: dataSignature, side: side)
     }
 }
 
+/// Type of the document
 public enum WDODocumentType: String {
     /// National ID card
     case idCard
@@ -73,9 +87,9 @@ public enum WDODocumentType: String {
     }
 }
 
-/// Side of the file
+/// Side of the document
 public enum WDODocumentSide: String {
-    /// Front side of an document. Usually the one with the picture
+    /// Front side of an document. Usually the one with the picture.
     case front
     /// Back side of an document
     case back
