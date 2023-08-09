@@ -263,7 +263,6 @@ class Networking {
             )
         }
         
-        
         /// Retrieves a consent text (usually HTML) for user to approve/reject.
         /// - Parameters:
         ///   - processId: ID of the process.
@@ -315,7 +314,6 @@ class Networking {
                 }
             )
         }
-        
         
         /// Provides necessary data to init scan SDK (like ZenID).
         ///

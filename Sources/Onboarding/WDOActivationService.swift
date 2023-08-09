@@ -392,15 +392,6 @@ private struct WDOActivationDataWithOTP: WDOActivationData {
     /// OTP received via 3rd party chanel.
     let otp: String
     
-    /// Creates activation data for identity onboarding with OTP.
-    /// - Parameters:
-    ///   - processId: Process ID retrieved from `start` call.
-    ///   - otp: OTP received via 3rd party chanel.
-    init(processId: String, otp: String) {
-        self.processId = processId
-        self.otp = otp
-    }
-    
     func asAttributes() -> [String: String] {
         return ["processId": processId, "otpCode": otp, "credentialsType": "ONBOARDING"]
     }
