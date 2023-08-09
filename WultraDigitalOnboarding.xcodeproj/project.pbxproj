@@ -87,7 +87,6 @@
 			children = (
 				DC75BBCC2A1526E4009C2901 /* Public */,
 				DC75BBCD2A1526F6009C2901 /* Private */,
-				DC75BBCB2A1525F3009C2901 /* Other */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -167,6 +166,7 @@
 			isa = PBXGroup;
 			children = (
 				DC75BBA12A1521B0009C2901 /* API */,
+				DC75BBCB2A1525F3009C2901 /* Other */,
 			);
 			name = Private;
 			sourceTree = "<group>";

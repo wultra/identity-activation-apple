@@ -78,6 +78,7 @@ public enum WDODocumentType: String {
     // Driving license
     case driversLicense
     
+    /// Available sides of the document
     public var sides: [WDODocumentSide] {
         switch self {
         case .idCard: return [.front, .back]

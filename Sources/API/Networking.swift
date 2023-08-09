@@ -63,9 +63,9 @@ class Networking {
             self.networking = networking
         }
         
-        /// Starts the Identity Onboarding process
+        /// Starts the Identity Onboarding process.
         ///
-        /// Encrypted with the ECIES application scope
+        /// Encrypted with the ECIES application scope.
         /// - Parameters:
         ///   - credentials: Custom credentials object for user authentication.
         ///   - completion: Result completion.
@@ -90,9 +90,9 @@ class Networking {
             )
         }
         
-        /// Cancel the Identity Onboarding process
+        /// Cancel the Identity Onboarding process.
         ///
-        /// Encrypted with the ECIES application scope
+        /// Encrypted with the ECIES application scope.
         /// - Parameters:
         ///   - processId: ID of the Identity Onboarding process
         ///   - completion: Result completion.
@@ -117,9 +117,9 @@ class Networking {
             )
         }
         
-        /// Retrieves status of the Identity Onboarding
+        /// Retrieves status of the Identity Onboarding.
         ///
-        /// Encrypted with the ECIES application scope
+        /// Encrypted with the ECIES application scope.
         /// - Parameters:
         ///   - processId: ID of the Identity Onboarding process
         ///   - completion: Result completion.
@@ -146,10 +146,10 @@ class Networking {
         
         /// Resends the OTP for users convenience (for example when SMS was not received by the user).
         ///
-        /// Note that there will be some frequency limit implemented by the server. Default is 10 seconds
+        /// Note that there will be some frequency limit implemented by the server. Default is 30 seconds
         /// but we advise to consult this with the backend developers.
         ///
-        /// Encrypted with the ECIES application scope
+        /// Encrypted with the ECIES application scope.
         ///
         /// - Parameters:
         ///   - processId: ID of the Identity Onboarding process
@@ -187,12 +187,10 @@ class Networking {
             self.networking = networking
         }
         
-        /// Retrieves status of the Identity Verification status
+        /// Retrieves status of the Identity Verification status.
         ///
-        /// Signed with PowerAuth possession factor.
-        /// Encrypted with the ECIES activation scope
         /// - Parameter completion: Result completion.
-        /// - Returns: Operation to observe
+        /// - Returns: Operation to observe.
         @discardableResult
         func getStatus(completion: @escaping (Result<IdentityStatusResponse, WPNError>) -> Void) -> Operation? {
             
@@ -213,10 +211,11 @@ class Networking {
             )
         }
         
-        /// Starts Identity Verification process
+        /// Starts Identity Verification process.
         ///
-        /// Signed with PowerAuth possession factor
-        /// - Parameter completion: Result completion.
+        /// - Parameters:
+        ///   - processId: ID of the process
+        ///   - completion: Result completion.
         /// - Returns: Operation to observe
         @discardableResult
         func start(processId: String, completion: @escaping (Result<Void, WPNError>) -> Void) -> Operation? {
@@ -239,8 +238,9 @@ class Networking {
         }
         
         /// Cancel and clean the current verification process. Acts as a "reset".
+        ///
         /// - Parameters:
-        ///   - processId: ID of the process
+        ///   - processId: ID of the process.
         ///   - completion: Result completion.
         /// - Returns: Operation to observe
         @discardableResult
@@ -263,6 +263,12 @@ class Networking {
             )
         }
         
+        
+        /// Retrieves a consent text (usually HTML) for user to approve/reject.
+        /// - Parameters:
+        ///   - processId: ID of the process.
+        ///   - completion: Result completion.
+        /// - Returns: Operation to observe.
         @discardableResult
         func getConsentText(processId: String, completion: @escaping (Result<String, WPNError>) -> Void) -> Operation? {
             
@@ -283,6 +289,13 @@ class Networking {
             )
         }
         
+        /// Approves or rejects privacy consent.
+        ///
+        /// - Parameters:
+        ///   - processId: ID of the process.
+        ///   - approved: If the user approved the consent.
+        ///   - completion: Result completion.
+        /// - Returns: Operation to observe.
         @discardableResult
         func resolveConsent(processId: String, approved: Bool, completion: @escaping (Result<Void, WPNError>) -> Void) -> Operation? {
             
@@ -303,6 +316,14 @@ class Networking {
             )
         }
         
+        
+        /// Provides necessary data to init scan SDK (like ZenID).
+        ///
+        /// - Parameters:
+        ///   - processId: ID of the process.
+        ///   - challenge: Challenge that the SDK provided.
+        ///   - completion: Result completion.
+        /// - Returns: Operation to observe.
         @discardableResult
         func initScanSDK(processId: String, challenge: String, completion: @escaping (Result<String, WPNError>) -> Void) -> Operation? {
             
@@ -324,15 +345,15 @@ class Networking {
             )
         }
         
-        /// Submits documents necessary for identity onboarding (like photos of ID or passport)
+        /// Submits documents necessary for identity verification (like photos of ID or passport).
         ///
-        /// Encrypted with the ECIES activation scope
+        /// Encrypted with the ECIES activation scope.
         /// - Parameters:
         ///   - data: Data to be send.
         ///           You can use `WDODocumentPayloadBuilder.build` for easier use.
-        ///   - progressCallback: Progress callback during upload
-        ///   - completion: Result completion.
-        /// - Returns: Operation to observe
+        ///   - progressCallback: Progress callback during upload.
+        ///   - completion: Result completion..
+        /// - Returns: Operation to observe.
         @discardableResult
         func submitDocuments(data: DocumentSubmitRequest, progressCallback: ((Double) -> Void)? = nil, completion: @escaping (Result<Void, WPNError>) -> Void) -> Operation? {
             
@@ -356,13 +377,12 @@ class Networking {
             )
         }
         
-        /// Asks for status of already uploaded documents
+        /// Asks for status of already uploaded documents.
         ///
-        /// Signed with PowerAuth possession factor.
         /// - Parameters:
-        ///   - processId: ID of the process
+        ///   - processId: ID of the process.
         ///   - completion: Result completion.
-        /// - Returns: Operation to observe
+        /// - Returns: Operation to observe.
         @discardableResult
         func documentsStatus(processId: String, completion: @escaping (Result<DocumentStatusResponse, WPNError>) -> Void) -> Operation? {
 
@@ -384,14 +404,13 @@ class Networking {
             )
         }
         
-        /// Starts presence check process (that user is actually physically present)
+        /// Starts presence check process (that user is actually physically present).
         ///
-        /// Signed with PowerAuth possession factor.
         /// Encrypted with the ECIES activation scope.
         /// - Parameters:
-        ///   - processId: ID of the process
+        ///   - processId: ID of the process.
         ///   - completion: Result completion.
-        /// - Returns: Operation to observe
+        /// - Returns: Operation to observe.
         @discardableResult
         func presenceCheckInit(processId: String, completion: @escaping (Result<PresenceCheckInitResponse, WPNError>) -> Void) -> Operation? {
 
@@ -413,13 +432,13 @@ class Networking {
             )
         }
         
-        /// Confirms presence check is done on the device
+        /// Confirms presence check is done on the device.
         ///
         /// Signed with PowerAuth possession factor.
         /// - Parameters:
-        ///   - processId: ID of the process
+        ///   - processId: ID of the process.
         ///   - completion: Result completion.
-        /// - Returns: Operation to observe
+        /// - Returns: Operation to observe.
         @discardableResult
         func presenceCheckSubmit(processId: String, completion: @escaping (Result<Void, WPNError>) -> Void) -> Operation? {
 
@@ -441,10 +460,11 @@ class Networking {
         }
         
         /// OTP resend  in case that the user didn't received it.
+        ///
         /// - Parameters:
-        ///   - processId: ID of the process
-        ///   - completion: Result completion
-        /// - Returns: Operation to observe
+        ///   - processId: ID of the process.
+        ///   - completion: Result completion.
+        /// - Returns: Operation to observe.
         @discardableResult
         func resendOTP(processId: String, completion: @escaping (Result<Void, WPNError>) -> Void) -> Operation? {
             
@@ -466,11 +486,12 @@ class Networking {
         }
         
         /// OTP verification during identification of the user.
+        ///
         /// - Parameters:
-        ///   - processId: ID of the process
-        ///   - otp: OTP that user received
-        ///   - completion: Result completion
-        /// - Returns: Operation to observe
+        ///   - processId: ID of the process.
+        ///   - otp: OTP that user received.
+        ///   - completion: Result completion.
+        /// - Returns: Operation to observe.
         @discardableResult
         func verifyOTP(processId: String, otp: String, completion: @escaping (Result<VerifyOTPResponse, WPNError>) -> Void) -> Operation? {
             
@@ -496,7 +517,7 @@ class Networking {
 #if ENABLE_ONBOARDING_DEMO
 extension Networking.Onboarding {
     
-    /// Retrieves OTP needed for Onboarding Process
+    /// Retrieves OTP needed for Onboarding Process.
     ///
     /// Note that this method is available only in demo Wultra implementation.
     /// Encrypted with the ECIES activation scope.

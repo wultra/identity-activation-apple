@@ -191,7 +191,7 @@ public class WDOVerificationService {
         }
     }
     
-    /// Returns consent text for user to approve
+    /// Returns consent text for user to approve.
     /// - Parameter completion: Callback with the result.
     public func consentGet(completion: @escaping (Result<Success, Fail>) -> Void) {
         guard let processId = guardProcessId(completion) else {
@@ -209,7 +209,7 @@ public class WDOVerificationService {
         }
     }
     
-    /// Approves the consent for this process and starts the activation
+    /// Approves the consent for this process and starts the activation.
     /// - Parameter completion: Callback with the result.
     public func consentApprove(completion: @escaping (Result<Success, Fail>) -> Void) {
         guard let processId = guardProcessId(completion) else {
@@ -238,7 +238,7 @@ public class WDOVerificationService {
     
     /// Returns a token for the document scanning SDK, when needed.
     /// - Parameters:
-    ///   - challenge: SDK generated challange for the server
+    ///   - challenge: SDK generated challenge for the server.
     ///   - completion: Callback with the token for the SDK.
     public func documentsInitSDK(challenge: String, completion: @escaping (Result<String, Fail>) -> Void) {
         
@@ -258,20 +258,21 @@ public class WDOVerificationService {
         }
     }
     
-    /// Set document types to scan
+    /// Set document types to scan.
     /// - Parameters:
-    ///   - types: Types of documents to scan
+    ///   - types: Types of documents to scan.
     ///   - completion: Callback with the result.
     public func documentsSetSelectedTypes(types: [WDODocumentType], completion: @escaping (Result<Success, Fail>) -> Void) {
+        // TODO: We should verify that we're in the expected state here
         let process = WDOVerificationScanProcess(types: types)
         cachedProcess = process
         markCompleted(.success(.scanDocument(process)), completion)
     }
     
-    /// Upload document files to the server
+    /// Upload document files to the server.
     /// - Parameters:
-    ///   - files: Document files
-    ///   - progressCallback: Upload progress callback
+    ///   - files: Document files.
+    ///   - progressCallback: Upload progress callback.
     ///   - completion: Callback with the result.
     public func documentsSubmit(files: [WDODocumentFile], progressCallback: @escaping (Double) -> Void, completion: @escaping (Result<Success, Fail>) -> Void) {
         
@@ -378,9 +379,9 @@ public class WDOVerificationService {
         }
     }
     
-    /// Verify OTP that user entered as a last step of the verification
+    /// Verify OTP that user entered as a last step of the verification.
     /// - Parameters:
-    ///   - otp: User entered OTP
+    ///   - otp: User entered OTP.
     ///   - completion: Callback with the result.
     public func verifyOTP(otp: String, completion: @escaping (Result<Success, Fail>) -> Void) {
         
@@ -410,7 +411,7 @@ public class WDOVerificationService {
         }
     }
     
-    /// Requests OTP resend
+    /// Requests OTP resend.
     /// - Parameter completion: Callback with the result.
     public func resendOTP(completion: @escaping (Result<Void, Fail>) -> Void) {
         
@@ -428,7 +429,7 @@ public class WDOVerificationService {
     }
     
     #if ENABLE_ONBOARDING_DEMO
-    /// Demo endpoint available only in Wultra Demo systems
+    /// Demo endpoint available only in Wultra Demo systems.
     /// - Parameter completion: Callback with the result.
     public func getOTP(completion: @escaping (Result<String, Fail>) -> Void) {
         
@@ -448,7 +449,7 @@ public class WDOVerificationService {
     
     // MARK: Public Helper Classes
     
-    /// Sucess result with next state that should be presented
+    /// Success result with next state that should be presented
     public class Success {
         
         init(_ state: WDOVerificationState) {
@@ -530,10 +531,10 @@ public class WDOVerificationService {
 public protocol WDOVerificationServiceDelegate: AnyObject {
     /// Called when PowerAuth activation status changed.
     ///
-    /// Note that this happends only when error is returned in some of the Verification endpoints and this error indicates PowerAuth status change.
+    /// Note that this happens only when error is returned in some of the Verification endpoints and this error indicates PowerAuth status change.
     func powerAuthActivationStatusChanged(_ sender: WDOVerificationService, status: PowerAuthActivationStatus)
     
-    /// Called when state of the verificatoin has changed.
+    /// Called when state of the verification has changed.
     func verificationStatusChanged(_ sender: WDOVerificationService, status: WDOVerificationState)
 }
 

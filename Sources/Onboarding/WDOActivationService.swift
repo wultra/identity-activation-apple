@@ -30,7 +30,7 @@ public class WDOActivationService {
     
     /// If the activation process is in progress.
     ///
-    /// Note that when this proeprty is `true` it can be already discontinued on the server.
+    /// Note that when this property is `true` it can be already discontinued on the server.
     /// Calling `status` in such case is recommended.
     public var hasActiveProcess: Bool { processId != nil }
     
@@ -79,7 +79,7 @@ public class WDOActivationService {
     
     /// Creates service instance
     /// - Parameters:
-    ///   - powerAuth: Configured PowerAuthSDK instance. This instance needs to be wihout valid activation otherwise you'll get errors.
+    ///   - powerAuth: Configured PowerAuthSDK instance. This instance needs to be without valid activation otherwise you'll get errors.
     ///   - config: Configuration of the networking service
     ///   - canRestoreSession: If the activation session can be restored (when app restarts). `true` by default
     public convenience init(powerAuth: PowerAuthSDK, config: WPNConfig, canRestoreSession: Bool = true) throws {
@@ -91,7 +91,7 @@ public class WDOActivationService {
     
     /// Creates service instance
     /// - Parameters:
-    ///   - networking: Networking service for the onboarding server with configured PowerAuthSDK instance that needs to be wihout valid activation otherwise you'll get errors.
+    ///   - networking: Networking service for the onboarding server with configured PowerAuthSDK instance that needs to be without valid activation otherwise you'll get errors.
     ///   - canRestoreSession: If the activation session can be restored (when app restarts). `true` by default
     public convenience init(networking: WPNNetworkingService, canRestoreSession: Bool = true) throws {
         self.init(api: try .init(networking: networking), canRestoreSession: canRestoreSession)
@@ -109,8 +109,8 @@ public class WDOActivationService {
     
     // MARK: - Public API
     
-    /// Retrieves status of the onboarding activation
-    /// - Parameter completion: Callback with the status or an error.
+    /// Retrieves status of the onboarding activation.
+    /// - Parameter completion: Callback with the result.
     public func status(completion: @escaping (Result<Status, WPNError>) -> Void) {
         serialized(completion) { [weak self] completion in
             guard let self else {
@@ -134,7 +134,7 @@ public class WDOActivationService {
         }
     }
     
-    /// Starts onboarding activation with provided credentials
+    /// Starts onboarding activation with provided credentials.
     /// - Parameters:
     ///   - credentials: Codable object with credentials. Which credentials are needed should be provided by a system/backend provider.
     ///   - completion: Callback with the result.
@@ -165,9 +165,9 @@ public class WDOActivationService {
         }
     }
     
-    /// Cancels the process
+    /// Cancels the process.
     /// - Parameters:
-    ///   - forceCancel: When true, the process will be canceled in the SDK even when fails on backend. `true` by default
+    ///   - forceCancel: When true, the process will be canceled in the SDK even when fails on backend. `true` by default.
     ///   - completion: Callback with the result.
     public func cancel(
         forceCancel: Bool = true,
@@ -208,7 +208,7 @@ public class WDOActivationService {
         }
     }
     
-    /// Requests OTP resend
+    /// Requests OTP resend.
     /// - Parameter completion: Callback with the result.
     public func resendOTP(completion: @escaping (Result<Void, WPNError>) -> Void) {
         
@@ -237,8 +237,8 @@ public class WDOActivationService {
     
     /// Activates PowerAuthSDK instance that was passed in the initializer.
     /// - Parameters:
-    ///   - otp: OTP provided by user
-    ///   - activationName: Name of the activation. Device name by default
+    ///   - otp: OTP provided by user.
+    ///   - activationName: Name of the activation. Device name by default.
     ///   - completion: Callback with the result.
     public func activate(
         otp: String,
