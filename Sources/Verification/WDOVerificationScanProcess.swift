@@ -44,25 +44,38 @@ public class WDOScannedDocument {
         case rejected
     }
     
+    /// Side of an uploaded document
+    public struct Side {
+        /// Type of the side
+        public let type: WDODocumentSide
+        /// ID on the server. Use this ID in case of an reupload
+        public let serverId: String
+        /// Upload state of the document
+        public let uploadState: UploadState
+    }
+    
     /// Type of the document
     public let type: WDODocumentType
     
     /// Upload state
     public var uploadState: UploadState {
-        guard let serverResult else {
+        // if there are no sides, consider the document not uploaded
+        guard !sides.isEmpty else {
             return .notUploaded
         }
-        if serverResult.contains(where: { $0.errors?.isEmpty == false }) {
-            return .rejected
-        } else {
-            return .accepted
-        }
+        // if any side is rejected, consider whole document rejected
+        return sides.contains { $0.uploadState == .rejected } ? .rejected : .accepted
     }
     
-    internal var serverResult: [Document]?
+    /// Sides of the document that was uploaded on the server
+    public private(set) var sides: [Side] = []
     
     fileprivate init(_ type: WDODocumentType) {
         self.type = type
+    }
+    
+    fileprivate func processServerData(documents: [Document]) {
+        sides = documents.map { .init(type: .from(apiType: $0.side), serverId: $0.id, uploadState: $0.errors?.isEmpty == false ? .rejected : .accepted )}
     }
 }
 
@@ -96,7 +109,7 @@ extension WDOVerificationScanProcess {
     func feed(_ serverData: [Document]) {
         for group in Dictionary(grouping: serverData, by: { $0.type }) {
             if let document = documents.first(where: { $0.type.apiType == group.key }) {
-                document.serverResult = group.value
+                document.processServerData(documents: group.value)
             }
         }
     }

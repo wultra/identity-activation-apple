@@ -36,8 +36,19 @@ public class WDODocumentFile {
     ///   - dataSignature: Signature of the image data. Optinal, `nil` by default
     ///   - side: Side of the document which the image captures
     public convenience init(scannedDocument: WDOScannedDocument, data: Data, dataSignature: String? = nil, side: WDODocumentSide) {
-        let originalDocumentId = scannedDocument.serverResult?.first { $0.side == side.apiType }?.id
+        let originalDocumentId = scannedDocument.sides.first { $0.type == side }?.serverId
         self.init(data: data, dataSignature: dataSignature, type: scannedDocument.type, side: side, originalDocumentId: originalDocumentId)
+    }
+    
+    /// Image that can be send to the backend for Identity Verification
+    /// - Parameters:
+    ///   - data: Image raw data
+    ///   - type: Type of the document
+    ///   - side: Side of the document which the image captures
+    ///   - originalDocumentId: Original document ID In case of a reupload
+    ///   - dataSignature: Signature of the image data. Optinal, `nil` by default
+    public convenience init(data: Data, type: WDODocumentType, side: WDODocumentSide, originalDocumentId: String?, dataSignature: String? = nil) {
+        self.init(data: data, dataSignature: dataSignature, type: type, side: side, originalDocumentId: originalDocumentId)
     }
     
     /// Image that can be send to the backend for Identity Verification
@@ -47,7 +58,7 @@ public class WDODocumentFile {
     ///   - type: Type of the document
     ///   - side: Side of the document (nil if the document is one-sided or only one side is expected)
     ///   - originalDocumentId: Original document ID In case of a reupload
-    init(data: Data, dataSignature: String? = nil, type: WDODocumentType, side: WDODocumentSide, originalDocumentId: String? = nil) {
+    init(data: Data, dataSignature: String? = nil, type: WDODocumentType, side: WDODocumentSide, originalDocumentId: String?) {
         self.data = data
         self.dataSignature = dataSignature
         self.type = type
