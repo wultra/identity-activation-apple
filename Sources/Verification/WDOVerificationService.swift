@@ -123,7 +123,7 @@ public class WDOVerificationService {
                 
                 switch response.status {
                 case .failed, .rejected, .notInitialized, .accepted:
-                    cachedProcess = nil
+                    self.cachedProcess = nil
                 default:
                     break
                 }

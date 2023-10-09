@@ -117,14 +117,14 @@ public class WDOActivationService {
                 completion(.failure(.init(reason: .unknown)))
                 return
             }
-            guard let processId else {
+            guard let processId = self.processId else {
                 completion(.failure(.init(reason: .wdo_activation_notRunning)))
                 return
             }
-            guard verifyCanStartProcess(completion) else {
+            guard self.verifyCanStartProcess(completion) else {
                 return
             }
-            api.onboarding.getStatus(processId: processId) { result in
+            self.api.onboarding.getStatus(processId: processId) { result in
                 result.onSuccess {
                     completion(.success($0.onboardingStatus.toServiceStatus()))
                 }.onError {
@@ -147,14 +147,14 @@ public class WDOActivationService {
                 completion(.failure(.init(reason: .unknown)))
                 return
             }
-            guard processId == nil else {
+            guard self.processId == nil else {
                 completion(.failure(.init(reason: .wdo_activation_inProgress)))
                 return
             }
-            guard verifyCanStartProcess(completion) else {
+            guard self.verifyCanStartProcess(completion) else {
                 return
             }
-            api.onboarding.start(with: credentials) { [weak self] result in
+            self.api.onboarding.start(with: credentials) { [weak self] result in
                 result.onSuccess {
                     self?.processId = $0.processId
                     completion(.success(()))
@@ -178,14 +178,14 @@ public class WDOActivationService {
                 completion(.failure(.init(reason: .unknown)))
                 return
             }
-            guard let processId else {
+            guard let processId = self.processId else {
                 completion(.failure(.init(reason: .wdo_activation_notRunning)))
                 return
             }
-            guard verifyCanStartProcess(completion) else {
+            guard self.verifyCanStartProcess(completion) else {
                 return
             }
-            api.onboarding.cancel(processId: processId) { [weak self]  result in
+            self.api.onboarding.cancel(processId: processId) { [weak self]  result in
                 result.onSuccess {
                     self?.processId = nil
                     completion(.success(()))
@@ -217,14 +217,14 @@ public class WDOActivationService {
                 completion(.failure(.init(reason: .unknown)))
                 return
             }
-            guard let processId else {
+            guard let processId = self.processId else {
                 completion(.failure(.init(reason: .wdo_activation_notRunning)))
                 return
             }
-            guard verifyCanStartProcess(completion) else {
+            guard self.verifyCanStartProcess(completion) else {
                 return
             }
-            api.onboarding.resendOTP(processId: processId) { result in
+            self.api.onboarding.resendOTP(processId: processId) { result in
                 switch result {
                 case .success:
                     completion(.success(()))
@@ -250,18 +250,18 @@ public class WDOActivationService {
                 completion(.failure(.init(reason: .unknown)))
                 return
             }
-            guard let processId else {
+            guard let processId = self.processId else {
                 completion(.failure(WPNError(reason: .wdo_activation_notRunning)))
                 return
             }
-            guard api.networking.powerAuth.canStartActivation() else {
+            guard self.api.networking.powerAuth.canStartActivation() else {
                 self.processId = nil
                 completion(.failure(WPNError(reason: .wdo_activation_cannotActivate)))
                 return
             }
             let data = WDOActivationDataWithOTP(processId: processId, otp: otp)
             do {
-                try api.networking.powerAuth.createActivation(data: data, name: activationName) { [weak self] result in
+                try self.api.networking.powerAuth.createActivation(data: data, name: activationName) { [weak self] result in
                     result.onSuccess {
                         self?.processId = nil
                         completion(.success($0))
