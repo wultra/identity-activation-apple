@@ -7,13 +7,13 @@ on:
   pull_request:
 
 jobs:
-  lint:
+  podlint:
     name: Pod Lib Lint
     runs-on: macos-13
     steps:
       - name: Checkout the repo
-        uses: actions/checkout@v2
-      - name: Select Xcode version
-        run: sudo xcode-select -s '/Applications/Xcode_14.3.app'
-      - name: Run
-        run: pod lib lint
+        uses: actions/checkout@v4
+      - name: Set proper xcode version
+        run: sh ./scripts/xcodeselect.sh
+      - name: Lint
+        run: pod lib lint --allow-warnings

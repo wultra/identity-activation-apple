@@ -31,3 +31,4 @@ xcuserdata
 Pods/
 Carthage
 *.jar
+swiftlint
