@@ -16,8 +16,31 @@
 
 import Foundation
 
-/// State which should be presented to the user
+/// State which should be presented to the user. Each state represent a separate screen UI that should be presented to the user.
 public enum WDOVerificationState: CustomStringConvertible {
+    
+    /// Show verification introduction screen where user can start the activation.
+    ///
+    /// Next step should be calling the `getConsentText` (might differ in your scenario).
+    case intro
+    /// Show approve/cancel user consent
+    case consent(_ html: String)
+    /// Show document selection to the user
+    case documentsToScanSelect
+    /// User should scan documents
+    case scanDocument(_ process: WDOVerificationScanProcess)
+    /// The system is processing data
+    case processing(_ item: ProcessingItem)
+    /// User should be presented with a presence check
+    case presenceCheck
+    /// User should enter OTP
+    case otp(_ remainingAttempts: Int?)
+    /// Verification failed and can be restarted
+    case failed
+    /// Verification is canceled and user needs to start again with an activation
+    case endstate(_ reason: EndstateReason)
+    /// Verification was sucessfully ended
+    case success
     
     /// Reason why is server processing
     public enum ProcessingItem: CustomStringConvertible {
@@ -72,26 +95,6 @@ public enum WDOVerificationState: CustomStringConvertible {
             }
         }
     }
-    /// Show verification introuction screen
-    case intro
-    /// Show approve/cancel user consent
-    case consent(_ html: String)
-    /// Show document selection to the user
-    case documentsToScanSelect
-    /// User should scan documents
-    case scanDocument(_ process: WDOVerificationScanProcess)
-    /// The system is processing data
-    case processing(_ item: ProcessingItem)
-    /// User should be presented with a presence check
-    case presenceCheck
-    /// User should enter OTP
-    case otp(_ remainingAttempts: Int?)
-    /// Verification failed and can be restarted
-    case failed
-    /// Verification is canceled and user needs to start again with an activation
-    case endstate(_ reason: EndstateReason)
-    /// Verification was sucessfully ended
-    case success
     
     public var description: String {
         let prefix = "WDOVerificationState"

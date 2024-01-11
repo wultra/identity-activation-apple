@@ -18,15 +18,17 @@ import Foundation
 import PowerAuth2
 import WultraPowerAuthNetworking
 
-/// Digital Onboarding Verification Service
+/// Service that can verify previously activated PowerAuthSDK instance.
 ///
-/// Service that can activate PowerAuthSDK verify instance that was activated but not fully verified.
+/// When PowerAuthSDK instance was activated with weak credentials via `WDOActivationService`, user needs to verify his genuine presence.
+/// This can be confirmed in the `PowerAuthActivationStatus.needVerification` which will be `true`.
 ///
-/// This service operations against `enrollment-onboarding-server` and you need to configure networking service with URL of this service.
+/// This service operates against Wultra Onboarding server (usually ending with `/enrollment-onboarding-server`) and you need to configure networking service with the right URL.
 public class WDOVerificationService {
     
     // MARK: Public Properties
     
+    /// Delegate that retrieves information about the verification and activation changes.
     public weak var delegate: WDOVerificationServiceDelegate?
     
     /// Accept language for the outgoing requests headers.
@@ -60,6 +62,7 @@ public class WDOVerificationService {
     
     private let api: Networking
     private let keychainKey: String
+    private var lastStatus: IdentityStatusResponse?
     private var cachedProcess: WDOVerificationScanProcess? {
         get {
             if let data = KeychainWrapper.standard.string(forKey: keychainKey) {
@@ -77,23 +80,23 @@ public class WDOVerificationService {
         }
     }
     
-    private var lastStatus: IdentityStatusResponse?
-    
     // MARK: - Public initializers
     
     /// Creates service instance
     /// - Parameters:
-    ///   - powerAuth: Configured PowerAuthSDK instance. This instance needs to be with valid activation otherwise you'll get errors.
-    ///   - config: Configuration of the networking service
+    ///   - powerAuth: Configured PowerAuthSDK instance. This instance needs to have a valid activation.
+    ///   - config: Configuration of the networking service.
+    /// - Throws: An error of type `WPNError` with additional information. Thrown when provided PowerAuthSDK instance is in the wrong state.
     public convenience init(powerAuth: PowerAuthSDK, wpnConfig: WPNConfig) throws {
         try self.init(networking: .init(powerAuth: powerAuth, config: wpnConfig, serviceName: "WDOVerificationNetworking"))
     }
     
     /// Creates service instance
     /// - Parameters:
-    ///   - networking: Networking service for the onboarding server with configured PowerAuthSDK instance that needs to be with valid activation otherwise you'll get errors.
+    ///   - networking: Networking service for the onboarding server with configured PowerAuthSDK instance that needs to have a valid activation.
+    /// - Throws: An error of type `WPNError` with additional information. Thrown when provided PowerAuthSDK instance is in the wrong state.
     public convenience init(networking: WPNNetworkingService) throws {
-        self.init(api: try .init(networking: networking))
+        try self.init(api: .init(networking: networking))
         if networking.powerAuth.hasValidActivation() == false {
             cachedProcess = nil
         }
@@ -101,7 +104,12 @@ public class WDOVerificationService {
     
     // MARK: - Private initializers
     
-    init(api: Networking) {
+    init(api: Networking) throws {
+        
+        guard api.networking.powerAuth.hasValidActivation() else {
+            throw WPNError(reason: .wdo_verification_activationNotActive)
+        }
+        
         self.api = api
         self.keychainKey = "wdocp_\(api.networking.powerAuth.configuration.instanceId)"
     }
@@ -109,6 +117,7 @@ public class WDOVerificationService {
     // MARK: - Public API
     
     /// Status of the verification.
+    ///
     /// - Parameter completion: Callback with the result.
     public func status(completion: @escaping (Result<WDOVerificationState, Fail>) -> Void) {
         
@@ -191,7 +200,10 @@ public class WDOVerificationService {
         }
     }
     
-    /// Returns consent text for user to approve.
+    /// Returns consent text for user to approve. The content of the text depends on the server configuration and might be plain text or html.
+    ///
+    /// Consent text explains how the service will handle his document photos or selfie scans.
+    ///
     /// - Parameter completion: Callback with the result.
     public func consentGet(completion: @escaping (Result<Success, Fail>) -> Void) {
         guard let processId = guardProcessId(completion) else {
@@ -210,6 +222,7 @@ public class WDOVerificationService {
     }
     
     /// Approves the consent for this process and starts the activation.
+    ///
     /// - Parameter completion: Callback with the result.
     public func consentApprove(completion: @escaping (Result<Success, Fail>) -> Void) {
         guard let processId = guardProcessId(completion) else {
@@ -236,7 +249,10 @@ public class WDOVerificationService {
         }
     }
     
-    /// Returns a token for the document scanning SDK, when needed.
+    /// Get the token for the document scanning SDK, when required.
+    ///
+    /// This is needed for example for ZenID provider.
+    ///
     /// - Parameters:
     ///   - challenge: SDK generated challenge for the server.
     ///   - completion: Callback with the token for the SDK.
@@ -258,20 +274,26 @@ public class WDOVerificationService {
         }
     }
     
-    /// Set document types to scan.
+    /// Set which documents will be scanned.
+    ///
+    /// Note that this needs to be in sync what server expects based on the configuration.
+    ///
     /// - Parameters:
     ///   - types: Types of documents to scan.
     ///   - completion: Callback with the result.
     public func documentsSetSelectedTypes(types: [WDODocumentType], completion: @escaping (Result<Success, Fail>) -> Void) {
-        // TODO: We should verify that we're in the expected state here
+        // TODO: We should maybe verify that we're in the expected state here?
         let process = WDOVerificationScanProcess(types: types)
         cachedProcess = process
         markCompleted(.success(.scanDocument(process)), completion)
     }
     
-    /// Upload document files to the server.
+    /// Upload document files to the server. The order of the documents is up to you. Make sure that uploaded document are reasonable size so you're not uploading large files.
+    ///
+    /// If you're uploading the same document file again, you need to include the `originalDocumentId` otherwise it will be rejected by the server.
+    ///
     /// - Parameters:
-    ///   - files: Document files.
+    ///   - files: Document files to upload.
     ///   - progressCallback: Upload progress callback.
     ///   - completion: Callback with the result.
     public func documentsSubmit(files: [WDODocumentFile], progressCallback: @escaping (Double) -> Void, completion: @escaping (Result<Success, Fail>) -> Void) {
@@ -299,7 +321,8 @@ public class WDOVerificationService {
         }
     }
     
-    /// Starts presence check. This returns attributes that are needed to start presence check SDK.
+    /// Initiates the presence check. This returns attributes that are needed to start the 3rd party SDK (if needed).
+    ///
     /// - Parameter completion: Callback with the result.
     public func presenceCheckInit(completion: @escaping (Result<[String: Any], Fail>) -> Void) {
         
@@ -319,7 +342,8 @@ public class WDOVerificationService {
         }
     }
     
-    /// Marks that presence check was performed.
+    /// Call when presence check was finished in the 3rd party SDK.
+    ///
     /// - Parameter completion: Callback with the result.
     public func presenceCheckSubmit(completion: @escaping (Result<Success, Fail>) -> Void) {
         
@@ -339,7 +363,8 @@ public class WDOVerificationService {
         }
     }
     
-    /// Restarts verification. When sucessfully called, intro screen should be presented.
+    /// Verification restart. When sucessfully called, intro screen should be presented.
+    ///
     /// - Parameter completion: Callback with the result.
     public func restartVerification(completion: @escaping (Result<Success, Fail>) -> Void) {
         
@@ -359,7 +384,8 @@ public class WDOVerificationService {
         }
     }
     
-    /// Cancels the whole activation/verification. After this it's no longer call any API endpoint and PowerAuth activation should be removed.
+    /// Cancel the whole activation/verification. After this it's no longer possible to call any API of this library and PowerAuth activation should be removed and activation started again.
+    ///
     /// - Parameter completion: Callback with the result.
     public func cancelWholeProcess(completion: @escaping (Result<Void, Fail>) -> Void) {
         
@@ -380,8 +406,9 @@ public class WDOVerificationService {
     }
     
     /// Verify OTP that user entered as a last step of the verification.
+    ///
     /// - Parameters:
-    ///   - otp: User entered OTP.
+    ///   - otp: OTP that user obtained via other channel (usually SMS or email).
     ///   - completion: Callback with the result.
     public func verifyOTP(otp: String, completion: @escaping (Result<Success, Fail>) -> Void) {
         
@@ -411,7 +438,10 @@ public class WDOVerificationService {
         }
     }
     
-    /// Requests OTP resend.
+    /// Request OTP resend.
+    ///
+    /// Since SMS or emails can fail to deliver, use this to send the OTP again.
+    ///
     /// - Parameter completion: Callback with the result.
     public func resendOTP(completion: @escaping (Result<Void, Fail>) -> Void) {
         
@@ -430,6 +460,9 @@ public class WDOVerificationService {
     
     #if ENABLE_ONBOARDING_DEMO
     /// Demo endpoint available only in Wultra Demo systems.
+    ///
+    /// If the app is running against our demo server, you can retrieve the OTP without needing to send SMS or emails.
+    ///
     /// - Parameter completion: Callback with the result.
     public func getOTP(completion: @escaping (Result<String, Fail>) -> Void) {
         
@@ -449,25 +482,25 @@ public class WDOVerificationService {
     
     // MARK: Public Helper Classes
     
-    /// Success result with next state that should be presented
+    /// Success result with the next screen/state that should be presented to the user.
     public class Success {
         
         init(_ state: WDOVerificationState) {
             self.state = state
         }
         
-        /// State of the verification for app to display
+        /// State of the verification for the app to display.
         public let state: WDOVerificationState
     }
     
-    /// Error result with cause of the error and state that should be presented (optional).
+    /// Error result with cause of the error and state that should be presented (if available).
     ///
     /// Note that state will be filled only when the error indicates state change.
     public class Fail: Error {
         
         /// Cause of the error.
         public let cause: WPNError
-        /// State of the verification for app to display
+        /// State of the verification for app to display. If not available, error screen should be displayed.
         public let state: WDOVerificationState?
         
         init(_ cause: WPNError) {
@@ -531,7 +564,8 @@ public class WDOVerificationService {
 public protocol WDOVerificationServiceDelegate: AnyObject {
     /// Called when PowerAuth activation status changed.
     ///
-    /// Note that this happens only when error is returned in some of the Verification endpoints and this error indicates PowerAuth status change.
+    /// Note that this happens only when error is returned in some of the Verification endpoints and this error indicates PowerAuth status change. For
+    /// example when the service finds out during the API call that the PowerAuth activation was removed or blocked on the server
     func powerAuthActivationStatusChanged(_ sender: WDOVerificationService, status: PowerAuthActivationStatus)
     
     /// Called when state of the verification has changed.
@@ -539,9 +573,9 @@ public protocol WDOVerificationServiceDelegate: AnyObject {
 }
 
 public extension WPNErrorReason {
-    /// Powerauth instance is not active.
+    /// Powerauth instance is not active. Verification can only happen on active PowerAuth activation.
     static let wdo_verification_activationNotActive = WPNErrorReason(rawValue: "wdo_verification_activationNotActive")
-    /// Wultra Digital Onboarding verificaiton status is unknown. Please make sure that the status was sucessfully fetched before calling any other method
+    /// Wultra Digital Onboarding verificaiton status is unknown. Please make sure that the status was at least once sucessfully fetched before calling any other method
     static let wdo_verification_missingStatus = WPNErrorReason(rawValue: "wdo_verification_missingStatus")
     /// Wultra Digital Onboarding OTP failed to verify.
     static let wdo_verification_otpFailed = WPNErrorReason(rawValue: "wdo_verification_otpFailed")
@@ -578,6 +612,7 @@ enum VerificationStatus {
     case rejected
     case success
     
+    // Translation from server status to phone status.
     static func from(status response: IdentityStatusResponse) -> VerificationStatus {
         switch (response.phase, response.status) {
         case (nil, .notInitialized):                    return .intro

@@ -39,14 +39,13 @@ class Networking {
     /// - Parameters:
     ///   - powerAuth: Valid powerauth instance.
     ///   - config: Configuration of the service. Default values are used when not specified (see config init documentation).
-    /// - Throws: `InitError.invalidBaseURL` when provided URL (from config or powerauth configuration) is invalid.
     convenience init(powerAuth: PowerAuthSDK, config: WPNConfig) throws {
-        try self.init(networking: WPNNetworkingService(powerAuth: powerAuth, config: config, serviceName: "WDOServiceNet"))
+        self.init(networking: WPNNetworkingService(powerAuth: powerAuth, config: config, serviceName: "WDOServiceNet"))
     }
     
     /// Creates the service instance.
     /// - Parameter networking: Networking service for HTTP communication and request signing.
-    init(networking: WPNNetworkingService) throws {
+    init(networking: WPNNetworkingService) {
         self.networking = networking
         self.onboarding = Onboarding(networking: networking)
         self.identityVerification = IdentityVerification(networking: networking)

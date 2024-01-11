@@ -19,19 +19,20 @@ import UIKit
 import PowerAuth2
 import WultraPowerAuthNetworking
 
-/// Digital Onboarding Activation Service.
+/// Service that can activate PowerAuthSDK instance by user weak credentials (like his email, phone number or client ID) + SMS OTP.
 ///
-/// Service that can activate PowerAuthSDK instance by user weak credentials (like his login and birthdate) + OTP.
+/// When the PowerAuthSDK is activated with this service, `PowerAuthActivationStatus.needVerification` will be `true`
+/// and you will need to verify the PowerAuthSDK instance via `WDOVerificationService`.
 ///
-/// This service operations against `enrollment-onboarding-server` and you need to configure networking service with URL of this service.
+/// This service operates against Wultra Onboarding server (usually ending with `/enrollment-onboarding-server`) and you need to configure networking service with the right URL.
 public class WDOActivationService {
     
     // MARK: - Public Properties
     
     /// If the activation process is in progress.
     ///
-    /// Note that when this property is `true` it can be already discontinued on the server.
-    /// Calling `status` in such case is recommended.
+    /// Note that even if this property is `true` it can be already discontinued on the server.
+    /// Calling `status(completion:)` for example after the app is launched in this case is recommended.
     public var hasActiveProcess: Bool { processId != nil }
     
     /// Accept language for the outgoing requests headers.
@@ -79,9 +80,10 @@ public class WDOActivationService {
     
     /// Creates service instance
     /// - Parameters:
-    ///   - powerAuth: Configured PowerAuthSDK instance. This instance needs to be without valid activation otherwise you'll get errors.
-    ///   - config: Configuration of the networking service
-    ///   - canRestoreSession: If the activation session can be restored (when app restarts). `true` by default
+    ///   - powerAuth: Configured PowerAuthSDK instance. This instance needs to be without valid activation.
+    ///   - config: Configuration for the networking.
+    ///   - canRestoreSession: If the activation session can be restored (when app restarts). `true` by default.
+    /// - Throws: An error of type `WPNError` with additional information. Thrown when provided PowerAuthSDK instance is in the wrong state.
     public convenience init(powerAuth: PowerAuthSDK, config: WPNConfig, canRestoreSession: Bool = true) throws {
         try self.init(
             networking: WPNNetworkingService(powerAuth: powerAuth, config: config, serviceName: "WDOActivationNetworking"),
@@ -91,15 +93,21 @@ public class WDOActivationService {
     
     /// Creates service instance
     /// - Parameters:
-    ///   - networking: Networking service for the onboarding server with configured PowerAuthSDK instance that needs to be without valid activation otherwise you'll get errors.
-    ///   - canRestoreSession: If the activation session can be restored (when app restarts). `true` by default
+    ///   - networking: Networking service for the onboarding server with configured PowerAuthSDK instance that needs to be without valid activation.
+    ///   - canRestoreSession: If the activation session can be restored (when app restarts). `true` by default.
+    /// - Throws: An error of type `WPNError` with additional information. Thrown when provided PowerAuthSDK instance is in the wrong state.
     public convenience init(networking: WPNNetworkingService, canRestoreSession: Bool = true) throws {
-        self.init(api: try .init(networking: networking), canRestoreSession: canRestoreSession)
+        try self.init(api: .init(networking: networking), canRestoreSession: canRestoreSession)
     }
     
     // MARK: - Internal initializers
     
-    init(api: Networking, canRestoreSession: Bool) {
+    init(api: Networking, canRestoreSession: Bool) throws {
+        
+        guard api.networking.powerAuth.canStartActivation() else {
+            throw WPNError(reason: .wdo_activation_cannotActivate)
+        }
+        
         self.api = api
         self.keychainKey = "wdopid_\(api.networking.powerAuth.configuration.instanceId)"
         if canRestoreSession == false {
@@ -110,6 +118,7 @@ public class WDOActivationService {
     // MARK: - Public API
     
     /// Retrieves status of the onboarding activation.
+    ///
     /// - Parameter completion: Callback with the result.
     public func status(completion: @escaping (Result<Status, WPNError>) -> Void) {
         serialized(completion) { [weak self] completion in
@@ -126,7 +135,13 @@ public class WDOActivationService {
             }
             self.api.onboarding.getStatus(processId: processId) { result in
                 result.onSuccess {
-                    completion(.success($0.onboardingStatus.toServiceStatus()))
+                    let status: Status = switch $0.onboardingStatus {
+                    case .activationInProgress: .activationInProgress
+                    case .verificationInProgress: .verificationInProgress
+                    case .failed: .failed
+                    case .finished: .finished
+                    }
+                    completion(.success(status))
                 }.onError {
                     completion(.failure($0))
                 }
@@ -134,7 +149,16 @@ public class WDOActivationService {
         }
     }
     
-    /// Starts onboarding activation with provided credentials.
+    /// Start onboarding activation with user credentials.
+    ///
+    /// For example, when you require email and birth date, your struct would look like this:
+    /// ```
+    /// struct Credentials: Codable {
+    ///     let email: String
+    ///     let birthdate: String
+    /// }
+    /// ```
+    ///
     /// - Parameters:
     ///   - credentials: Codable object with credentials. Which credentials are needed should be provided by a system/backend provider.
     ///   - completion: Callback with the result.
@@ -165,7 +189,8 @@ public class WDOActivationService {
         }
     }
     
-    /// Cancels the process.
+    /// Cancel the activation process.
+    ///
     /// - Parameters:
     ///   - forceCancel: When true, the process will be canceled in the SDK even when fails on backend. `true` by default.
     ///   - completion: Callback with the result.
@@ -201,14 +226,18 @@ public class WDOActivationService {
         }
     }
     
-    /// Clears the stored data (without networking call).
+    /// Clear the stored data (without networking call).
     public func clear() {
         oq.addOperation { [weak self] in
             self?.processId = nil
         }
     }
     
-    /// Requests OTP resend.
+    /// OTP resend request.
+    ///
+    /// This is intended to be displayed for the user to use in case of the OTP is not recieved.
+    /// For example, when the user does not recieve SMS after some time, there should be a button to "send again".
+    ///
     /// - Parameter completion: Callback with the result.
     public func resendOTP(completion: @escaping (Result<Void, WPNError>) -> Void) {
         
@@ -235,10 +264,11 @@ public class WDOActivationService {
         }
     }
     
-    /// Activates PowerAuthSDK instance that was passed in the initializer.
+    /// Activate PowerAuthSDK instance that was passed in the initializer.
+    ///
     /// - Parameters:
     ///   - otp: OTP provided by user.
-    ///   - activationName: Name of the activation. Device name by default.
+    ///   - activationName: Name of the activation. Device name by default (usually something like John's iPhone or similar).
     ///   - completion: Callback with the result.
     public func activate(
         otp: String,
@@ -283,6 +313,9 @@ public class WDOActivationService {
     
     #if ENABLE_ONBOARDING_DEMO
     /// Demo endpoint available only in Wultra Demo systems
+    ///
+    /// If the app is running against our demo server, you can retrieve the OTP without needing to send SMS or emails.
+    ///
     /// - Parameter completion: Callback with the result.
     public func getOTP(completion: @escaping (Result<String, WPNError>) -> Void) {
         guard let processId else {
@@ -324,15 +357,16 @@ public class WDOActivationService {
     
     /// Status of the Onboarding Activation
     public enum Status: CustomStringConvertible {
-        /// Activation is in the progress
+        /// Activation is in the progress. Continue with the `activate()`.
         case activationInProgress
-        /// Activation was already finished, not waiting for the verification
+        /// Activation was already finished, now waiting for the user verification. Use `WDOVerificationService` to fully activate the PowerAuthSDK instance.
         case verificationInProgress
-        /// Activation failed
+        /// Activation failed, start over.
         case failed
-        /// Both activation and verification was finished
+        /// Both activation and verification was finished and the user was fully activated.
         case finished
         
+        /// Description of the status.
         public var description: String {
             let prefix = "WDOOnboardingService.Status"
             switch self {
@@ -352,7 +386,7 @@ public extension WPNErrorReason {
     static let wdo_activation_inProgress = WPNErrorReason(rawValue: "wdo_activation_inProgress")
     /// Wultra Digital Onboarding activation was not started.
     static let wdo_activation_notRunning = WPNErrorReason(rawValue: "wdo_activation_notRunning")
-    /// PowerAuth instance cannot start the activation
+    /// PowerAuth instance cannot start the activation (probably already activated).
     static let wdo_activation_cannotActivate = WPNErrorReason(rawValue: "wdo_activation_cannotActivate")
 }
 
@@ -364,6 +398,8 @@ public extension WPNError {
     }
     
     /// If user should be allowed to repeat Onboarding Activation OTP step.
+    ///
+    /// There are limited amount of OTPs that user can try. After that, the process should be canceled and started again.
     var allowOnboardingOtpRetry: Bool {
         if let remainingAttempts = onboardingOtpRemainingAttempts {
             return remainingAttempts > 0
@@ -373,17 +409,6 @@ public extension WPNError {
 }
 
 // MARK: - Private helper structs and utils
-
-private extension OnboardingStatus {
-    func toServiceStatus() -> WDOActivationService.Status {
-        switch self {
-        case .activationInProgress: return .activationInProgress
-        case .verificationInProgress: return .verificationInProgress
-        case .failed: return .failed
-        case .finished: return .finished
-        }
-    }
-}
 
 // Internal implementation of the default activation data parameters
 private struct WDOActivationDataWithOTP: WDOActivationData {
