@@ -16,48 +16,48 @@
 
 import Foundation
 
-/// Image that can be send to the backend for Identity Verification
+/// Image of a document that can be sent to the backend for Identity Verification.
 public class WDODocumentFile {
-    /// Image to be uploaded.
+    /// Raw data to upload. Make sure that the data aren't too big, hundreds of kbs should be enough.
     public var data: Data
     /// Image signature.
+    ///
+    /// Optional, use only when the scan SDK supports this.
     public var dataSignature: String?
-    /// Type of the document
+    /// Type of the document.
     public let type: WDODocumentType
-    /// Side of the document (nil if the document is one-sided or only one side is expected)
+    /// Side of the document (`front` if the document is one-sided or only one side is expected).
     public let side: WDODocumentSide
-    /// In case of reupload
+    /// For image reuploading when the previous file of the same document was rejected.
+    ///
+    /// Without specifying this value, the document side won't be overwritten.
     public let originalDocumentId: String?
     
-    /// Image that can be send to the backend for Identity Verification
+    /// Image of a document that can be sent to the backend for Identity Verification.
+    ///
     /// - Parameters:
-    ///   - scannedDocument: Document which we're uploading
-    ///   - data: Image raw data
-    ///   - dataSignature: Signature of the image data. Optinal, `nil` by default
-    ///   - side: Side of the document which the image captures
-    public convenience init(scannedDocument: WDOScannedDocument, data: Data, dataSignature: String? = nil, side: WDODocumentSide) {
+    ///   - scannedDocument: Document to upload.
+    ///   - data: Raw image data.  Make sure that the data aren't too big, hundreds of kbs should be enough.
+    ///   - side: The side of the document that the image captures.
+    ///   - dataSignature: Signature of the image data. Optional, use only when the scan SDK supports this. `nil` by default.
+    public convenience init(scannedDocument: WDOScannedDocument, data: Data, side: WDODocumentSide, dataSignature: String? = nil) {
         let originalDocumentId = scannedDocument.sides.first { $0.type == side }?.serverId
         self.init(data: data, dataSignature: dataSignature, type: scannedDocument.type, side: side, originalDocumentId: originalDocumentId)
     }
     
-    /// Image that can be send to the backend for Identity Verification
+    /// Image of a document that can be sent to the backend for Identity Verification.
+    ///
     /// - Parameters:
-    ///   - data: Image raw data
-    ///   - type: Type of the document
-    ///   - side: Side of the document which the image captures
-    ///   - originalDocumentId: Original document ID In case of a reupload
-    ///   - dataSignature: Signature of the image data. Optinal, `nil` by default
+    ///   - data: Raw image data.  Make sure that the data aren't too big, hundreds of kbs should be enough.
+    ///   - type: The type of the document.
+    ///   - side: The side of the document the the image captures
+    ///   - originalDocumentId: Original document ID In case of a reupload. If you've previously uploaded this type and side and won't specify the previous ID, the image won't be overwritten.
+    ///   - dataSignature: Signature of the image data. Optional, use only when the scan SDK supports this. `nil` by default.
     public convenience init(data: Data, type: WDODocumentType, side: WDODocumentSide, originalDocumentId: String?, dataSignature: String? = nil) {
         self.init(data: data, dataSignature: dataSignature, type: type, side: side, originalDocumentId: originalDocumentId)
     }
     
-    /// Image that can be send to the backend for Identity Verification
-    /// - Parameters:
-    ///   - data: Image data to be uploaded.
-    ///   - dataSignature: Image signature
-    ///   - type: Type of the document
-    ///   - side: Side of the document (nil if the document is one-sided or only one side is expected)
-    ///   - originalDocumentId: Original document ID In case of a reupload
+    // internal init
     init(data: Data, dataSignature: String? = nil, type: WDODocumentType, side: WDODocumentSide, originalDocumentId: String?) {
         self.data = data
         self.dataSignature = dataSignature
@@ -69,27 +69,31 @@ public class WDODocumentFile {
 
 public extension WDOScannedDocument {
     
-    /// Creates image that can be send to the backend for Identity Verification
+    /// Creates an image that can be sent to the backend for Identity Verification.
+    ///
     /// - Parameters:
-    ///   - side: Side of the document which the image captures
-    ///   - data: Image raw data
-    ///   - dataSignature: Signature of the image data. Optinal, `nil` by default
-    /// - Returns: Document file for upload
+    ///   - side: The side of the document that the image captures.
+    ///   - data: Raw image data.  Make sure that the data aren't too big, hundreds of kbs should be enough.
+    ///   - dataSignature: Signature of the image data. Optional, use only when the scan SDK supports this. `nil` by default.
+    /// - Returns: A document file for upload.
     func createFileForUpload(side: WDODocumentSide, data: Data, dataSignature: String? = nil) -> WDODocumentFile {
-        return WDODocumentFile(scannedDocument: self, data: data, dataSignature: dataSignature, side: side)
+        return WDODocumentFile(scannedDocument: self, data: data, side: side, dataSignature: dataSignature)
     }
 }
 
-/// Type of the document
+/// Type of the document.
 public enum WDODocumentType: String {
     /// National ID card
     case idCard
     /// Passport
     case passport
-    // Driving license
+    // Drivers license
     case driversLicense
     
     /// Available sides of the document
+    ///
+    /// Front and back for ID card.
+    /// For passport and drivers license front only.
     public var sides: [WDODocumentSide] {
         switch self {
         case .idCard: return [.front, .back]
@@ -101,8 +105,10 @@ public enum WDODocumentType: String {
 
 /// Side of the document
 public enum WDODocumentSide: String {
-    /// Front side of an document. Usually the one with the picture.
+    /// Front side of a document. Usually the one with the picture.
+    ///
+    /// When a document has more than one side but only one side is used (for example passport), then such side is considered to be front.
     case front
-    /// Back side of an document
+    /// Back side of a document
     case back
 }

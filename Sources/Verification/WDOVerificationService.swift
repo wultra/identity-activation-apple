@@ -200,7 +200,7 @@ public class WDOVerificationService {
         }
     }
     
-    /// Returns consent text for user to approve. The content of the text depends on the server configuration and might be plain text or html.
+    /// Returns consent text for user to approve. The content of the text depends on the server configuration and might be plain text or HTML.
     ///
     /// Consent text explains how the service will handle his document photos or selfie scans.
     ///
