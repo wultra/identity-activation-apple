@@ -573,9 +573,9 @@ public protocol WDOVerificationServiceDelegate: AnyObject {
 }
 
 public extension WPNErrorReason {
-    /// Powerauth instance is not active. Verification can only happen on active PowerAuth activation.
+    /// Powerauth instance is not active. Verification can only happen when the user already activated the PowerAuth instance.
     static let wdo_verification_activationNotActive = WPNErrorReason(rawValue: "wdo_verification_activationNotActive")
-    /// Wultra Digital Onboarding verificaiton status is unknown. Please make sure that the status was at least once sucessfully fetched before calling any other method
+    /// Wultra Digital Onboarding verification status is unknown. Please make sure that the status was at least once successfully fetched before calling any other method
     static let wdo_verification_missingStatus = WPNErrorReason(rawValue: "wdo_verification_missingStatus")
     /// Wultra Digital Onboarding OTP failed to verify.
     static let wdo_verification_otpFailed = WPNErrorReason(rawValue: "wdo_verification_otpFailed")

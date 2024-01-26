@@ -18,7 +18,7 @@ __Wultra Digital Onboarding__ is an extension SDK for apps using [Wultra Mobile 
 
 ## Introduction
 
-Elevate your standard device activation, user login and request signing scenarios by incorporating facial recognition and document scanning in diverse situations:
+Elevate your standard device activation, user login, and request signing scenarios by incorporating facial recognition and document scanning in diverse situations:
 
 - Reclaim access or recover lost credentials through authenticating the user's genuine presence and verifying document validity.
 - Reinforce conventional password or PIN-based authentication with an extra layer of security through face recognition.
@@ -27,7 +27,7 @@ Elevate your standard device activation, user login and request signing scenario
 ### Minimal requirements
 
 | Requuirement |      Value          |  
-|--------------|-------------------|
+|--------------|---------------------|
 | Min. system  |  __iOS 13__         | 
 | Integration  |  __Cocoapods, SPM__ | 
 
