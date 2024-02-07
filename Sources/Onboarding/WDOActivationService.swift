@@ -264,7 +264,7 @@ public class WDOActivationService {
         }
     }
     
-    /// Activate PowerAuthSDK instance that was passed in the initializer.
+    /// Activate the PowerAuthSDK instance that was passed in the initializer.
     ///
     /// - Parameters:
     ///   - otp: OTP provided by user.
@@ -357,13 +357,13 @@ public class WDOActivationService {
     
     /// Status of the Onboarding Activation
     public enum Status: CustomStringConvertible {
-        /// Activation is in the progress. Continue with the `activate()`.
+        /// Activation is in progress. Continue with the `activate()`.
         case activationInProgress
         /// Activation was already finished, now waiting for the user verification. Use `WDOVerificationService` to fully activate the PowerAuthSDK instance.
         case verificationInProgress
         /// Activation failed, start over.
         case failed
-        /// Both activation and verification was finished and the user was fully activated.
+        /// Both activation and verification were finished and the user was fully activated.
         case finished
         
         /// Description of the status.
@@ -419,5 +419,50 @@ private struct WDOActivationDataWithOTP: WDOActivationData {
     
     func asAttributes() -> [String: String] {
         return ["processId": processId, "otpCode": otp, "credentialsType": "ONBOARDING"]
+    }
+}
+
+struct UserData: Codable {
+    let userID: String
+    let birthDate: String
+}
+
+class MyUserService {
+    // prepared service
+    private var activationService: WDOActivationService!
+    
+    func activate(smsOTP: String) {
+        activationService.activate(otp: smsOTP) { result in
+            switch result {
+            case .success(let resultData):
+                // PowerAuthSDK instance was activated.
+                // At this moment, navigate the user to
+                // the PIN keyboard to finish the PowerAuthSDK initialization.
+                // Fore more information, follow the PowerAuthSDK documentation.
+                break
+            case .failure(let failure):
+                if failure.allowOnboardingOtpRetry {
+                    // User entered a wrong OTP, prompt for a new one.
+                    // Remaining OTP attempts cound: failure.onboardingOtpRemainingAttempts
+                } else {
+                    // show error UI
+                }
+            }
+        }
+    }
+    
+    func startActivation(id: String, bday: String) {
+        let data = UserData(userID: id, birthDate: bday)
+        activationService.start(credentials: data) { result in
+            switch result {
+            case .success:
+                // success, continue with `activate()`
+                // at this moment, the `hasActiveProcess` starts return true
+                break
+            case .failure(let error):
+                // show error to the user
+                break
+            }
+        }
     }
 }

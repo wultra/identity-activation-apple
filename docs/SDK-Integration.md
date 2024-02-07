@@ -50,6 +50,11 @@ pod 'WultraDigitalOnboarding'
 | WDO SDK | PowerAuth SDK |  
 |---|---|
 | `1.0.x` | `1.7.x` |
+
 ## Xcode Compatibility
 
 We recommend using Xcode version 15.0 or newer.
+
+## Read next
+
+- [Device Activation](Device-Activation.md)

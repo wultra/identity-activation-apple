@@ -12,7 +12,7 @@ Elevate your standard device activation, user login, and request signing scenari
 
 ### Minimal requirements
 
-| Requuirement |      Value          |  
+| Requirement  |      Value          |  
 |--------------|---------------------|
 | Min. system  |  __iOS 13__         | 
 | Integration  |  __Cocoapods, SPM__ | 
@@ -24,7 +24,7 @@ We also provide an [Android version of this library](https://github.com/wultra/d
 ## What will you need before the implementation
 
 <!-- begin box info -->
-The Wultra Digital Onboarding SDK functions as an extension of Wultra Mobile Authentication _(PowerAuth)_ that is required.
+The Wultra Digital Onboarding SDK functions as an extension of [Wultra Mobile Authentication (PowerAuth)](https://github.com/wultra/powerauth-mobile-sdk) that is required.
 <!-- end -->
 
 Before initiating the integration, it's essential to ensure that your server environment is prepared with appropriately configured services capable of managing user verification and onboarding, seamlessly connecting to your systems.
@@ -33,14 +33,13 @@ Given the unique characteristics of each customer system, the utilization of thi
 
 ## Document ORC and face verification
 
-We seamlessly incorporate a range of industry-leading solutions for document scanning, ensuring versatility and effectiveness in your operations.
+We seamlessly incorporate industry-leading solutions for document scanning, ensuring versatility and effectiveness in your operations.
 
 - iProov for genuine presence
 - Innovatrics for document scanning and genuine presence
 - ZenID for document scanning
 
-Our dedicated technical and sales representatives are available to guide you in selecting the optimal solution that aligns perfectly with your specific needs.
-
+Our dedicated technical and sales representatives are available to guide you in selecting the optimal solution that aligns perfectly with your needs.
 
 <!-- begin remove -->
 ## Integration Tutorials
