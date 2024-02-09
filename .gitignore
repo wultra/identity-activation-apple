@@ -32,3 +32,5 @@ Pods/
 Carthage
 *.jar
 swiftlint
+
+Package.resolved
