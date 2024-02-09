@@ -1,6 +1,6 @@
 # Error Handling
 
-Errors produced by this library are of type `WPNError` that comes from our networking layer. For more information visit [the library documentation](https://github.com/wultra/digital-onboarding-apple).
+Errors produced by this library are of type `WPNError` that comes from our networking layer. For more information visit [the library documentation](https://github.com/wultra/networking-apple).
 
 
 ## Custom Digital Onboarding Error Reasons

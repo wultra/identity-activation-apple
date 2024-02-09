@@ -3,7 +3,7 @@
 SDK uses `WDOLogger` class that prints to the console.
 
 <!-- begin box info -->
-Networking traffic is logged in its own logger described in the [networking library documentation](https://github.com/wultra/digital-onboarding-apple).
+Networking traffic is logged in its own logger described in the [networking library documentation](https://github.com/wultra/networking-apple).
 <!-- end -->
 
 ### Verbosity Level
