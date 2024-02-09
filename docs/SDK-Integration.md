@@ -49,6 +49,7 @@ pod 'WultraDigitalOnboarding'
 
 | WDO SDK | PowerAuth SDK |  
 |---|---|
+| `1.1.x` | `1.8.x` |
 | `1.0.x` | `1.7.x` |
 
 ## Xcode Compatibility
