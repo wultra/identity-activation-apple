@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.1 (??? ?, 2024)
+## 1.0.1 (Feb 9, 2024)
 
 - Added documentation
 
