@@ -43,7 +43,7 @@ Our dedicated technical and sales representatives are available to guide you in 
 
 ## Open Source Code
 
-The code of the library is open source and you can freely browse it in our GitHub at [https://github.com/wultra/digital-onboarding-apple](https://github.com/wultra/digital-onboarding-apple)
+The code of the library is open source and you can freely browse it in our GitHub at [https://github.com/wultra/digital-onboarding-apple](https://github.com/wultra/digital-onboarding-apple/tree/develop/)
 
 <!-- begin remove -->
 ## Integration Tutorials
@@ -58,3 +58,7 @@ The code of the library is open source and you can freely browse it in our GitHu
 
 _* or similar weak identification like userID or phone number_
 <!-- end -->
+
+## Read next
+
+- [SDK Integration](SDK-Integration.md)

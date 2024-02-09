@@ -1,4 +1,4 @@
-# Verifyng user with `WDOVerificationService`
+# Verifyng user
 
 If your PowerAuthSDK instance was activated with the `WDOActivationService`, it will be in the state that needs additional verification. Without such verification, it won't be able to properly sign requests.
 

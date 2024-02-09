@@ -1,4 +1,4 @@
-# Device Activation with `WDOActivationService`
+# Device Activation
 
 With `WDOActivationService` you can onboard PowerAuth with just a piece of user information like his email, phone number, or login name.
 
