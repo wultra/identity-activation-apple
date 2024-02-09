@@ -21,7 +21,7 @@ public class WDOError: Error {
     
     let localizedDescription: String
     
-    public init(message: String) {
+    init(message: String) {
         localizedDescription = message
     }
 }

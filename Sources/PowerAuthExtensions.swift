@@ -17,9 +17,9 @@
 import Foundation
 import PowerAuth2
 
-/// Activation data used in PowerAuth activation process (createActivation method).
+/// Activation data used in PowerAuth activation process (`createActivation` method).
 public protocol WDOActivationData {
-    /// Process ID retrieved from `start` call.
+    /// Process ID retrieved from the `WDOActivationService`.
     var processId: String { get }
     /// Attributes needed for the PowerAuth activation.
     func asAttributes() -> [String: String]
@@ -27,13 +27,14 @@ public protocol WDOActivationData {
 
 public extension PowerAuthSDK {
     
-    /// Creates powerauth activation based on the data in the WDOActivationData object.
+    /// Creates PowerAuth activation based on the data in the `WDOActivationData` object.
+    ///
     /// - Parameters:
-    ///   - data: Custom activation data
-    ///   - name: Name of the activation
-    ///   - callback: Result callback
-    /// - Throws: Error when activation data cannot be constructed
-    /// - Returns: operation task
+    ///   - data: Custom activation data.
+    ///   - name: Name of the activation (usually device name, for example "John's iPhone").
+    ///   - callback: Result callback.
+    /// - Throws: An error when activation data cannot be constructed.
+    /// - Returns: Operation task.
     @discardableResult
     func createActivation(data: WDOActivationData, name: String, callback: @escaping (Result<PowerAuthActivationResult, Error>) -> Void) throws -> PowerAuthOperationTask? {
         let activation = try PowerAuthActivation(identityAttributes: data.asAttributes(), name: name)
@@ -48,11 +49,15 @@ public extension PowerAuthSDK {
 }
 
 public extension PowerAuthActivationStatus {
-    internal var activationFlags: [String] { customObject?["activationFlags"] as? [String] ?? [] }
-    /// When true, activation needs verification via `WDOVerificationService`
+    
+    /// When true, activation needs to be verified via `WDOVerificationService`.
     var needVerification: Bool { verificationPending || verificationInProgress }
+    
     /// Identity Verification is waiting to start.
     var verificationPending: Bool { activationFlags.contains("VERIFICATION_PENDING") }
+    
     /// Identity Verification was already started by the user
     var verificationInProgress: Bool { activationFlags.contains("VERIFICATION_IN_PROGRESS") }
+    
+    internal var activationFlags: [String] { customObject?["activationFlags"] as? [String] ?? [] }
 }

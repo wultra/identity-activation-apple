@@ -16,13 +16,13 @@
 
 import UIKit
 
-/// Verification Scan Process that describes which documents needs to be scanned and uploaded
+/// Describes the state of documents that need to be uploaded to the server.
 public class WDOVerificationScanProcess {
     
-    /// Documents that needs to be scanned
+    /// All documents that need to be scanned.
     public let documents: [WDOScannedDocument]
     
-    /// Which document should be scanned next. `nil` when all documents are uploaded and accepted
+    /// Which document should be scanned next. `nil` when all documents are uploaded and accepted.
     public var nextDocumentToScan: WDOScannedDocument? { documents.first { $0.uploadState != .accepted }}
     
     // internal init
@@ -31,33 +31,13 @@ public class WDOVerificationScanProcess {
     }
 }
 
-/// Document that needs to be scanned during process
+/// Document that needs to be scanned during process.
 public class WDOScannedDocument {
     
-    /// State of the document on the server
-    public enum UploadState {
-        /// Document was not uploaded yet
-        case notUploaded
-        /// Document was accepted
-        case accepted
-        /// Document was rejected and needs to be reuploaded
-        case rejected
-    }
-    
-    /// Side of an uploaded document
-    public struct Side {
-        /// Type of the side
-        public let type: WDODocumentSide
-        /// ID on the server. Use this ID in case of an reupload
-        public let serverId: String
-        /// Upload state of the document
-        public let uploadState: UploadState
-    }
-    
-    /// Type of the document
+    /// Type of the document.
     public let type: WDODocumentType
     
-    /// Upload state
+    /// Upload state.
     public var uploadState: UploadState {
         // if there are no sides, consider the document not uploaded
         guard !sides.isEmpty else {
@@ -67,7 +47,7 @@ public class WDOScannedDocument {
         return sides.contains { $0.uploadState == .rejected } ? .rejected : .accepted
     }
     
-    /// Sides of the document that was uploaded on the server
+    /// Sides of the document that were uploaded on the server.
     public private(set) var sides: [Side] = []
     
     fileprivate init(_ type: WDODocumentType) {
@@ -76,6 +56,32 @@ public class WDOScannedDocument {
     
     fileprivate func processServerData(documents: [Document]) {
         sides = documents.map { .init(type: .from(apiType: $0.side), serverId: $0.id, uploadState: $0.errors?.isEmpty == false ? .rejected : .accepted )}
+    }
+    
+    /// State of the document on the server.
+    public enum UploadState {
+        
+        /// The document was not uploaded yet.
+        case notUploaded
+        
+        /// The document was accepted by the server.
+        case accepted
+        
+        /// The document was rejected and needs to be re-uploaded.
+        case rejected
+    }
+    
+    /// Side of the uploaded document.
+    public struct Side {
+        
+        /// Type of the side.
+        public let type: WDODocumentSide
+        
+        /// ID on the server. Use this ID in case of an reupload
+        public let serverId: String
+        
+        /// Upload state of the document
+        public let uploadState: UploadState
     }
 }
 
@@ -96,12 +102,6 @@ extension WDOVerificationScanProcess {
         }
         
         let types = split[1].split(separator: ",").compactMap { WDODocumentType(rawValue: String($0)) }
-        
-        // TODO: removed for now
-//        guard types.count == numberOfRequiredDocuments else {
-//            D.error("Cannot create scan process from cache - wrong number of documents")
-//            return nil
-//        }
         
         self.init(types: types)
     }
