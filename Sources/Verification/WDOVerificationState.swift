@@ -16,7 +16,7 @@
 
 import Foundation
 
-/// State which should be presented to the user. Each state represent a separate screen UI that should be presented to the user.
+/// State which should be presented to the user. Each state represents a separate screen UI that should be presented to the user.
 public enum WDOVerificationState: CustomStringConvertible {
     
     /// Show the verification introduction screen where the user can start the activation.

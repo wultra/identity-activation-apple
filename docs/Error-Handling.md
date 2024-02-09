@@ -33,3 +33,7 @@ After the user entered the wrong OTP and an error was raised, you can retrieve t
 |`wdo_verification_activationNotActive`|Powerauth instance is not active. Verification can only happen when the user already activated the PowerAuth instance.|
 |`wdo_verification_missingStatus`|Verification status is unknown. Please make sure that the status was at least once successfully fetched before calling any other method.|
 |`wdo_verification_otpFailed`|OTP failed to verify.|
+
+## Read next
+
+- [Language Configuration](Language-Configuration.md)

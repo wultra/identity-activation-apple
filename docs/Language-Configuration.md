@@ -7,3 +7,7 @@ The default language is `en`. Availability of languages depends on server config
 <!-- begin box info -->
 The language properties are just a wrap-around of the underlying networking language configuration described in [our networking library documentation](https://github.com/wultra/digital-onboarding-apple).
 <!-- end -->
+
+## Read next
+
+- [Logging](Logging.md)

@@ -41,6 +41,10 @@ We seamlessly incorporate industry-leading solutions for document scanning, ensu
 
 Our dedicated technical and sales representatives are available to guide you in selecting the optimal solution that aligns perfectly with your needs.
 
+## Open Source Code
+
+The code of the library is open source and you can freely browse it in our GitHub at [https://github.com/wultra/digital-onboarding-apple](https://github.com/wultra/digital-onboarding-apple)
+
 <!-- begin remove -->
 ## Integration Tutorials
 - [SDK Integration](SDK-Integration.md)
@@ -50,6 +54,7 @@ Our dedicated technical and sales representatives are available to guide you in 
 - [Error Handling](Error-Handling.md)
 - [Language Configuration](Language-Configuration.md)
 - [Logging](Logging.md)
+- [Changelog](Changelog.md)
 
 _* or similar weak identification like userID or phone number_
 <!-- end -->

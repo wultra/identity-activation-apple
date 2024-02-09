@@ -10,7 +10,7 @@ PowerAuth enrolled in such a way will need [further user verification](Verifying
 
 ## Creating an instance
 
-To create an instance you will need a `PowerAuthSDK` instance that is ready to be activated or a `WPNNetworkingService` with such a `PowerAuthSDK` instance. Optionally, you can choose if the activation process will persist between instance re-creation (for example app restart).
+To create an instance you will need a `PowerAuthSDK` instance that is __ready to be activated__ or a `WPNNetworkingService` with such a `PowerAuthSDK` instance. Optionally, you can choose if the activation process will persist between instance re-creation (for example app restart).
 
 <!-- begin box info -->
 [Documentation for `PowerAuthSDK`](https://github.com/wultra/powerauth-mobile-sdk).  
@@ -40,8 +40,7 @@ let networking = WPNNetworkingService(
     acceptLanguage: "en" // more info in "Language Configuration" docs section
 )
 let activationService = WDOActivationService(
-    powerAuth: powerAuth,
-    config: WPNConfig(baseUrl: "https://sever.my/path/"),
+    networking: networking,
     canRestoreSession: true
 )
 

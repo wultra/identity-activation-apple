@@ -9,3 +9,7 @@
 - [Logging](Logging.md)
 
 _* or similar weak identification like userID or phone number_
+
+**Other**
+
+- [Changelog](./Changelog.md)
