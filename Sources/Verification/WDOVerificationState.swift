@@ -16,13 +16,71 @@
 
 import Foundation
 
-/// State which should be presented to the user
+/// State which should be presented to the user. Each state represents a separate screen UI that should be presented to the user.
 public enum WDOVerificationState: CustomStringConvertible {
     
-    /// Reason why is server processing
+    /// Show the verification introduction screen where the user can start the activation.
+    ///
+    /// The next step should be calling the `getConsentText`.
+    case intro
+    
+    /// Show approve/cancel user consent.
+    /// The content of the text depends on the server configuration and might be plain text or HTML.
+    ///
+    /// The next step should be calling the `consentApprove`.
+    case consent(_ body: String)
+    
+    /// Show document selection to the user. Which documents are available and how many
+    /// can the user select is up to your backend configuration.
+    ///
+    /// The next step should be calling the `documentsSetSelectedTypes`.
+    case documentsToScanSelect
+    
+    /// User should scan documents - display UI for the user to scan all necessary documents.
+    ///
+    /// The next step should be calling the `documentsSubmit`.
+    case scanDocument(_ process: WDOVerificationScanProcess)
+    
+    /// The system is processing data - show loading with text hint from provided `ProcessingItem`.
+    ///
+    /// The next step should be calling the `status`.
+    case processing(_ item: ProcessingItem)
+    
+    /// The user should be presented with a presence check.
+    /// Presence check is handled by third-party SDK based on the project setup.
+    ///
+    /// The next step should be calling the `presenceCheckInit` to start the check and `presenceCheckSubmit` to
+    /// mark it finished  Note that these methods won't change the status and it's up to the app to handle the process of the presence check.
+    case presenceCheck
+    
+    /// Show enter OTP screen with resend button.
+    ///
+    /// The next step should be calling the `verifyOTP` with user-entered OTP.
+    /// The OTP is usually SMS or email.
+    case otp(_ remainingAttempts: Int?)
+    
+    /// Verification failed and can be restarted
+    ///
+    /// The next step should be calling the `restartVerification` or `cancelWholeProcess` based on
+    /// the user's decision if he wants to try it again or cancel the process.
+    case failed
+    
+    /// Verification is canceled and the user needs to start again with a new PowerAuth activation.
+    ///
+    /// The next step should be calling the `PowerAuthSDK.removeActivationLocal()` and starting activation from scratch.
+    case endstate(_ reason: EndstateReason)
+    
+    /// Verification was successfully ended. Continue into your app
+    case success
+    
+    /// The reason for what we are waiting for. For example, we can wait for documents to be OCRed and matched against the database.
+    /// Use these values for better loading texts to tell the user what is happening - some tasks may take some time and see just
+    /// spinning loader might be frustrating for the user.
     public enum ProcessingItem: CustomStringConvertible {
-        /// Reason cannot be specified
+        
+        /// Reason cannot be specified - show generic "Loading" text or similar.
         case other
+        
         /// Documents are being uploaded to a internal systems
         case documentUpload
         /// Documents are being verified
@@ -54,13 +112,20 @@ public enum WDOVerificationState: CustomStringConvertible {
         }
     }
     
-    /// Why the process ended in non-recoverable state
+    /// The reason why the process ended in a non-recoverable state.
     public enum EndstateReason: CustomStringConvertible {
-        /// The verification was rejected
+        
+        /// The verification was rejected by the system
+        ///
+        /// eg: Fake information, fraud detection, or user is trying repeatedly in a short time.
+        /// The real reason is not presented to the user and is only audited on the server.
         case rejected
-        /// Limit of repeat tries was reached
+        
+        /// The limit of repeat tries was reached. There is a fixed number of tries that the user can reach
+        /// before the system stops the process.
         case limitReached
-        /// Other reason
+        
+        /// An unknown reason.
         case other
         
         public var description: String {
@@ -72,26 +137,6 @@ public enum WDOVerificationState: CustomStringConvertible {
             }
         }
     }
-    /// Show verification introuction screen
-    case intro
-    /// Show approve/cancel user consent
-    case consent(_ html: String)
-    /// Show document selection to the user
-    case documentsToScanSelect
-    /// User should scan documents
-    case scanDocument(_ process: WDOVerificationScanProcess)
-    /// The system is processing data
-    case processing(_ item: ProcessingItem)
-    /// User should be presented with a presence check
-    case presenceCheck
-    /// User should enter OTP
-    case otp(_ remainingAttempts: Int?)
-    /// Verification failed and can be restarted
-    case failed
-    /// Verification is canceled and user needs to start again with an activation
-    case endstate(_ reason: EndstateReason)
-    /// Verification was sucessfully ended
-    case success
     
     public var description: String {
         let prefix = "WDOVerificationState"

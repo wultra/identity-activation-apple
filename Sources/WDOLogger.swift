@@ -16,7 +16,7 @@
 
 import Foundation
 
-/// WDOLogger provides simple logging facility available for DEBUG build of the library.
+/// Simple logging facility.
 public class WDOLogger {
     
     /// Defines verbose level for this simple debugging facility.
@@ -31,7 +31,7 @@ public class WDOLogger {
         case all = 3
     }
     
-    /// Current verbose level. Note that value is ignored for non-DEBUG builds.
+    /// Current verbose level. `warnings` as a default.
     public static var verboseLevel: VerboseLevel = .warnings
     
     /// Character limit for single log message. Default is 12 000. Unlimited when nil
@@ -39,29 +39,23 @@ public class WDOLogger {
     
     /// Prints simple message to the debug console.
     static func print(_ message: @autoclosure () -> String) {
-        #if DEBUG || WDO_ENABLE_LOGGING
         if verboseLevel == .all {
             Swift.print("[WDO] \(message().limit(characterLimit))")
         }
-        #endif
     }
 
     /// Prints warning message to the debug console.
     static func warning(_ message: @autoclosure () -> String) {
-        #if DEBUG || WDO_ENABLE_LOGGING
         if verboseLevel.rawValue >= VerboseLevel.warnings.rawValue {
             Swift.print("[WDO] WARNING: \(message().limit(characterLimit))")
         }
-        #endif
     }
     
     /// Prints error message to the debug console.
     static func error(_ message: @autoclosure () -> String) {
-        #if DEBUG || WDO_ENABLE_LOGGING
         if verboseLevel != .off {
             Swift.print("[WDO] ERROR: \(message().limit(characterLimit))")
         }
-        #endif
     }
     
     #if DEBUG
