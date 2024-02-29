@@ -86,17 +86,15 @@ public class WDOVerificationService {
     /// - Parameters:
     ///   - powerAuth: Configured PowerAuthSDK instance. This instance needs to have a valid activation.
     ///   - config: Configuration of the networking service.
-    /// - Throws: An error of type `WPNError` with additional information. Thrown when provided PowerAuthSDK instance is in the wrong state.
-    public convenience init(powerAuth: PowerAuthSDK, wpnConfig: WPNConfig) throws {
-        try self.init(networking: .init(powerAuth: powerAuth, config: wpnConfig, serviceName: "WDOVerificationNetworking"))
+    public convenience init(powerAuth: PowerAuthSDK, wpnConfig: WPNConfig) {
+        self.init(networking: .init(powerAuth: powerAuth, config: wpnConfig, serviceName: "WDOVerificationNetworking"))
     }
     
     /// Creates service instance
     /// - Parameters:
     ///   - networking: Networking service for the onboarding server with configured PowerAuthSDK instance that needs to have a valid activation.
-    /// - Throws: An error of type `WPNError` with additional information. Thrown when provided PowerAuthSDK instance is in the wrong state.
-    public convenience init(networking: WPNNetworkingService) throws {
-        try self.init(api: .init(networking: networking))
+    public convenience init(networking: WPNNetworkingService) {
+        self.init(api: .init(networking: networking))
         if networking.powerAuth.hasValidActivation() == false {
             cachedProcess = nil
         }
@@ -104,12 +102,7 @@ public class WDOVerificationService {
     
     // MARK: - Private initializers
     
-    init(api: Networking) throws {
-        
-        guard api.networking.powerAuth.hasValidActivation() else {
-            throw WPNError(reason: .wdo_verification_activationNotActive)
-        }
-        
+    init(api: Networking) {
         self.api = api
         self.keychainKey = "wdocp_\(api.networking.powerAuth.configuration.instanceId)"
     }

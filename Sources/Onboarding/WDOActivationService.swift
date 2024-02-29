@@ -83,9 +83,8 @@ public class WDOActivationService {
     ///   - powerAuth: Configured PowerAuthSDK instance. This instance needs to be without valid activation.
     ///   - config: Configuration for the networking.
     ///   - canRestoreSession: If the activation session can be restored (when app restarts). `true` by default.
-    /// - Throws: An error of type `WPNError` with additional information. Thrown when provided PowerAuthSDK instance is in the wrong state.
-    public convenience init(powerAuth: PowerAuthSDK, config: WPNConfig, canRestoreSession: Bool = true) throws {
-        try self.init(
+    public convenience init(powerAuth: PowerAuthSDK, config: WPNConfig, canRestoreSession: Bool = true) {
+        self.init(
             networking: WPNNetworkingService(powerAuth: powerAuth, config: config, serviceName: "WDOActivationNetworking"),
             canRestoreSession: canRestoreSession
         )
@@ -95,19 +94,13 @@ public class WDOActivationService {
     /// - Parameters:
     ///   - networking: Networking service for the onboarding server with configured PowerAuthSDK instance that needs to be without valid activation.
     ///   - canRestoreSession: If the activation session can be restored (when app restarts). `true` by default.
-    /// - Throws: An error of type `WPNError` with additional information. Thrown when provided PowerAuthSDK instance is in the wrong state.
-    public convenience init(networking: WPNNetworkingService, canRestoreSession: Bool = true) throws {
-        try self.init(api: .init(networking: networking), canRestoreSession: canRestoreSession)
+    public convenience init(networking: WPNNetworkingService, canRestoreSession: Bool = true) {
+        self.init(api: .init(networking: networking), canRestoreSession: canRestoreSession)
     }
     
     // MARK: - Internal initializers
     
-    init(api: Networking, canRestoreSession: Bool) throws {
-        
-        guard api.networking.powerAuth.canStartActivation() else {
-            throw WPNError(reason: .wdo_activation_cannotActivate)
-        }
-        
+    init(api: Networking, canRestoreSession: Bool) {
         self.api = api
         self.keychainKey = "wdopid_\(api.networking.powerAuth.configuration.instanceId)"
         if canRestoreSession == false {
@@ -425,44 +418,4 @@ private struct WDOActivationDataWithOTP: WDOActivationData {
 struct UserData: Codable {
     let userID: String
     let birthDate: String
-}
-
-class MyUserService {
-    // prepared service
-    private var activationService: WDOActivationService!
-    
-    func activate(smsOTP: String) {
-        activationService.activate(otp: smsOTP) { result in
-            switch result {
-            case .success(let resultData):
-                // PowerAuthSDK instance was activated.
-                // At this moment, navigate the user to
-                // the PIN keyboard to finish the PowerAuthSDK initialization.
-                // Fore more information, follow the PowerAuthSDK documentation.
-                break
-            case .failure(let failure):
-                if failure.allowOnboardingOtpRetry {
-                    // User entered a wrong OTP, prompt for a new one.
-                    // Remaining OTP attempts cound: failure.onboardingOtpRemainingAttempts
-                } else {
-                    // show error UI
-                }
-            }
-        }
-    }
-    
-    func startActivation(id: String, bday: String) {
-        let data = UserData(userID: id, birthDate: bday)
-        activationService.start(credentials: data) { result in
-            switch result {
-            case .success:
-                // success, continue with `activate()`
-                // at this moment, the `hasActiveProcess` starts return true
-                break
-            case .failure(let error):
-                // show error to the user
-                break
-            }
-        }
-    }
 }
