@@ -46,6 +46,7 @@ public class WDOActivationService {
             return api.networking.acceptLanguage
         }
         set {
+            D.debug("Setting new language for WDOActivationService: \(newValue)")
             api.networking.acceptLanguage = newValue
         }
     }
@@ -114,12 +115,15 @@ public class WDOActivationService {
     ///
     /// - Parameter completion: Callback with the result.
     public func status(completion: @escaping (Result<Status, WPNError>) -> Void) {
+        D.debug("Retrieving activation status.")
         serialized(completion) { [weak self] completion in
             guard let self else {
+                D.error("Canceling the status check - WDOActivationService instance was released.")
                 completion(.failure(.init(reason: .unknown)))
                 return
             }
             guard let processId = self.processId else {
+                D.error("Cannot call for status = process not started (processId not available).")
                 completion(.failure(.init(reason: .wdo_activation_notRunning)))
                 return
             }
@@ -134,8 +138,10 @@ public class WDOActivationService {
                     case .failed: .failed
                     case .finished: .finished
                     }
+                    D.info("WDOActivationService.status success: \(status.description)")
                     completion(.success(status))
                 }.onError {
+                    D.error($0)
                     completion(.failure($0))
                 }
             }
@@ -159,12 +165,15 @@ public class WDOActivationService {
         credentials: T,
         completion: @escaping (Result<Void, WPNError>) -> Void
     ) {
+        D.debug("Starting activation with credentials: \(credentials)")
         serialized(completion) { [weak self] completion in
             guard let self else {
+                D.error("Canceling the start - WDOActivationService instance was released.")
                 completion(.failure(.init(reason: .unknown)))
                 return
             }
             guard self.processId == nil else {
+                D.error("Cannot start the process - processId already obtained, cancel first.")
                 completion(.failure(.init(reason: .wdo_activation_inProgress)))
                 return
             }
@@ -173,9 +182,12 @@ public class WDOActivationService {
             }
             self.api.onboarding.start(with: credentials) { [weak self] result in
                 result.onSuccess {
+                    D.info("WDOActivationService.start success")
+                    D.debug(" - processId: \($0.processId)")
                     self?.processId = $0.processId
                     completion(.success(()))
                 }.onError {
+                    D.error($0)
                     completion(.failure($0))
                 }
             }
@@ -191,12 +203,15 @@ public class WDOActivationService {
         forceCancel: Bool = true,
         completion: @escaping (Result<Void, WPNError>) -> Void
     ) {
+        D.debug("Cancelling activation. Force cancel: \(forceCancel)")
         serialized(completion) { [weak self] completion in
             guard let self else {
+                D.error("Canceling the cabcel - WDOActivationService instance was released.")
                 completion(.failure(.init(reason: .unknown)))
                 return
             }
             guard let processId = self.processId else {
+                D.error("Cannot cancel the process (processId not available).")
                 completion(.failure(.init(reason: .wdo_activation_notRunning)))
                 return
             }
@@ -205,13 +220,16 @@ public class WDOActivationService {
             }
             self.api.onboarding.cancel(processId: processId) { [weak self]  result in
                 result.onSuccess {
+                    D.info("Process cancel - success.")
                     self?.processId = nil
                     completion(.success(()))
                 }.onError { error in
                     if forceCancel {
+                        D.debug("Process canceled (but the request failed).")
                         self?.processId = nil
                         completion(.success(()))
                     } else {
+                        D.error(error)
                         completion(.failure(error))
                     }
                 }
@@ -222,6 +240,7 @@ public class WDOActivationService {
     /// Clear the stored data (without networking call).
     public func clear() {
         oq.addOperation { [weak self] in
+            D.info("Activation: Cleared.")
             self?.processId = nil
         }
     }
@@ -233,13 +252,15 @@ public class WDOActivationService {
     ///
     /// - Parameter completion: Callback with the result.
     public func resendOTP(completion: @escaping (Result<Void, WPNError>) -> Void) {
-        
+        D.debug("Activation: resending OTP")
         serialized(completion) { [weak self] completion in
             guard let self else {
+                D.error("Canceling the OTP resend - WDOActivationService instance was released.")
                 completion(.failure(.init(reason: .unknown)))
                 return
             }
             guard let processId = self.processId else {
+                D.error("Cannot resend OTP for non-active process")
                 completion(.failure(.init(reason: .wdo_activation_notRunning)))
                 return
             }
@@ -249,8 +270,10 @@ public class WDOActivationService {
             self.api.onboarding.resendOTP(processId: processId) { result in
                 switch result {
                 case .success:
+                    D.info("OTP resend OK.")
                     completion(.success(()))
                 case .failure(let error):
+                    D.error(error)
                     completion(.failure(error))
                 }
             }
@@ -268,16 +291,22 @@ public class WDOActivationService {
         activationName: String = UIDevice.current.name,
         completion: @escaping (Result<PowerAuthActivationResult, WPNError>) -> Void
     ) {
+        
+        D.debug("Activating the PowerAuth with activation name '\(activationName)'")
+        
         serialized(completion) { [weak self] completion in
             guard let self else {
+                D.error("Canceling the activation - WDOActivationService instance was released.")
                 completion(.failure(.init(reason: .unknown)))
                 return
             }
             guard let processId = self.processId else {
+                D.error("Process not started - cannot activate.")
                 completion(.failure(WPNError(reason: .wdo_activation_notRunning)))
                 return
             }
             guard self.api.networking.powerAuth.canStartActivation() else {
+                D.error("PowerAuth instance cannot be activated.")
                 self.processId = nil
                 completion(.failure(WPNError(reason: .wdo_activation_cannotActivate)))
                 return
@@ -286,9 +315,11 @@ public class WDOActivationService {
             do {
                 try self.api.networking.powerAuth.createActivation(data: data, name: activationName) { [weak self] result in
                     result.onSuccess {
+                        D.info("Activation was successful.")
                         self?.processId = nil
                         completion(.success($0))
                     }.onError {
+                        D.error($0)
                         let error = WPNError(reason: .unknown, error: $0)
                         // when no longer possible to retry activation and the error is not "connection" issue
                         // reset the processID, because we cannot recover
@@ -311,15 +342,20 @@ public class WDOActivationService {
     ///
     /// - Parameter completion: Callback with the result.
     public func getOTP(completion: @escaping (Result<String, WPNError>) -> Void) {
+        D.debug("Getting OTP (non-production endpoint)")
         guard let processId else {
+            D.error("Cannot retrieve OTP - process not started")
             completion(.failure(WPNError(reason: .wdo_activation_notRunning)))
             return
         }
         api.onboarding.getOTP(processId: processId, type: .activation) { result in
             switch result {
             case .success(let otp):
+                D.info("OTP retrieved.")
+                D.debug(" - \(otp)")
                 completion(.success(otp))
             case .failure(let error):
+                D.error(error)
                 completion(.failure(error))
             }
         }
@@ -339,6 +375,7 @@ public class WDOActivationService {
     private func verifyCanStartProcess<T>(_ completion: @escaping (Result<T, WPNError>) -> Void) -> Bool {
             
         guard api.networking.powerAuth.canStartActivation() else {
+            D.error("PowerAuth is already activated - Activation cannot be started/processed.")
             self.processId = nil
             completion(.failure(.wrap(.wdo_activation_cannotActivate)))
             return false
