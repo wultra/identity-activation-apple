@@ -16,7 +16,7 @@ You can limit the amount of logged information via the `verboseLevel` property.
 | `errors`               | Only errors will be logged.                       |
 | `warnings` _(default)_ | Errors and warnings will be logged.               |
 | `info`                 | Error, warning and info messages will be logged.  |
-| `debug`                  | All messages will be logged.                      |
+| `debug`                | All messages will be logged.                      |
 
 ### Logger Delegate
 
