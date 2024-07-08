@@ -62,7 +62,7 @@ class DocumentPayloadBuilder {
             throw WDOError(message: "Failed to create zip file: \(error?.localizedDescription ?? "unknown error").")
         }
         
-        D.print("Created zip file of size \(round((Double(zipData.count)/1024.0/1024.0) * 100) / 100)mb.")
+        D.debug("Created zip file of size \(round((Double(zipData.count)/1024.0/1024.0) * 100) / 100)mb.")
         
         return DocumentSubmitRequest(
             processId: processId,

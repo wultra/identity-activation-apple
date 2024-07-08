@@ -42,6 +42,7 @@ public class WDOVerificationService {
             return api.networking.acceptLanguage
         }
         set {
+            D.debug("Setting new language for WDOVerificationService: \(newValue)")
             api.networking.acceptLanguage = newValue
         }
     }
@@ -114,34 +115,45 @@ public class WDOVerificationService {
     /// - Parameter completion: Callback with the result.
     public func status(completion: @escaping (Result<WDOVerificationState, Fail>) -> Void) {
         
+        D.debug("Retrieving verification status.")
+        
         api.identityVerification.getStatus { [weak self] result in
             
             guard let self else {
+                completion(.failure(.init(.init(reason: .unknown))))
                 return
             }
             
             switch result {
             case .success(let response):
                 
+                D.info("Verification status successfully retrieved.")
+                D.debug("\(response)")
+                
                 switch response.status {
                 case .failed, .rejected, .notInitialized, .accepted:
+                    D.debug("Status \(response.status) - clearing cache.")
                     self.cachedProcess = nil
                 default:
                     break
                 }
                 self.lastStatus = response
-                
-                D.print("Verification status handling. Status \(response.status.rawValue), phase \(response.phase?.rawValue ?? "nil").")
-                switch VerificationStatus.from(status: response) {
+                let vf = VerificationStatus.from(status: response)
+                D.info("Verification status: \(vf)")
+                switch vf {
                 case .intro:
                     self.markCompleted(.success(.intro), completion)
                 case .documentScan:
+                    D.debug("Veryfying documents status")
                     self.api.identityVerification.documentsStatus(processId: response.processId) { [weak self] docsResult in
                         guard let self else {
+                            completion(.failure(.init(.init(reason: .unknown))))
                             return
                         }
                         switch docsResult {
                         case .success(let docsResponse):
+                            
+                            D.info("Documents status retrieved.")
                             
                             let documents = docsResponse.documents
                             
@@ -170,6 +182,7 @@ public class WDOVerificationService {
                             }
                             
                         case .failure(let error):
+                            D.error(error)
                             self.markCompleted(error, completion)
                         }
                     }
@@ -187,6 +200,7 @@ public class WDOVerificationService {
                     self.markCompleted(.success(.success), completion)
                 }
             case .failure(let error):
+                D.error(error)
                 self.lastStatus = nil
                 self.markCompleted(error, completion)
             }
@@ -199,16 +213,20 @@ public class WDOVerificationService {
     ///
     /// - Parameter completion: Callback with the result.
     public func consentGet(completion: @escaping (Result<Success, Fail>) -> Void) {
+        D.debug("Getting consent.")
         guard let processId = guardProcessId(completion) else {
             return
         }
         api.identityVerification.getConsentText(processId: processId) { [weak self] result in
-            guard let self = self else {
+            guard let self else {
+                completion(.failure(.init(.init(reason: .unknown))))
                 return
             }
             result.onSuccess {
+                D.info("Consent data retrieved.")
                 self.markCompleted(.success(.consent($0)), completion)
             }.onError {
+                D.error($0)
                 self.markCompleted($0, completion)
             }
         }
@@ -218,25 +236,32 @@ public class WDOVerificationService {
     ///
     /// - Parameter completion: Callback with the result.
     public func consentApprove(completion: @escaping (Result<Success, Fail>) -> Void) {
+        D.debug("Approving consent.")
         guard let processId = guardProcessId(completion) else {
             return
         }
         api.identityVerification.resolveConsent(processId: processId, approved: true) { [weak self] result in
-            guard let self = self else {
+            guard let self else {
+                completion(.failure(.init(.init(reason: .unknown))))
                 return
             }
             result.onSuccess {
+                D.info("Consent granted - starting the process.")
                 self.api.identityVerification.start(processId: processId) { [weak self] startResult in
                     guard let self = self else {
+                        completion(.failure(.init(.init(reason: .unknown))))
                         return
                     }
                     startResult.onSuccess {
+                        D.info("Process started")
                         self.markCompleted(.success(.documentsToScanSelect), completion)
                     }.onError {
+                        D.error($0)
                         self.markCompleted($0, completion)
                     }
                 }
             }.onError {
+                D.error($0)
                 self.markCompleted($0, completion)
             }
         }
@@ -251,17 +276,22 @@ public class WDOVerificationService {
     ///   - completion: Callback with the token for the SDK.
     public func documentsInitSDK(challenge: String, completion: @escaping (Result<String, Fail>) -> Void) {
         
+        D.debug("Initiating document scan SDK.")
+        
         guard let processId = guardProcessId(completion) else {
             return
         }
         
         api.identityVerification.initScanSDK(processId: processId, challenge: challenge) { [weak self] result in
             guard let self = self else {
+                completion(.failure(.init(.init(reason: .unknown))))
                 return
             }
             result.onSuccess {
+                D.info("Document init successful.")
                 self.markCompleted(.success($0), completion)
             }.onError {
+                D.error($0)
                 self.markCompleted($0, completion)
             }
         }
@@ -276,6 +306,7 @@ public class WDOVerificationService {
     ///   - completion: Callback with the result.
     public func documentsSetSelectedTypes(types: [WDODocumentType], completion: @escaping (Result<Success, Fail>) -> Void) {
         // TODO: We should maybe verify that we're in the expected state here?
+        D.debug("Selecting document types - \(types).")
         let process = WDOVerificationScanProcess(types: types)
         cachedProcess = process
         markCompleted(.success(.scanDocument(process)), completion)
@@ -291,6 +322,8 @@ public class WDOVerificationService {
     ///   - completion: Callback with the result.
     public func documentsSubmit(files: [WDODocumentFile], progressCallback: @escaping (Double) -> Void, completion: @escaping (Result<Success, Fail>) -> Void) {
         
+        D.debug("Submitting files.")
+        
         guard let processId = guardProcessId(completion) else {
             return
         }
@@ -299,16 +332,20 @@ public class WDOVerificationService {
             do {
                 let data = try DocumentPayloadBuilder.build(processId: processId, files: files)
                 self.api.identityVerification.submitDocuments(data: data, progressCallback: progressCallback) { [weak self] result in
-                    guard let self = self else {
+                    guard let self else {
+                        completion(.failure(.init(.init(reason: .unknown))))
                         return
                     }
                     result.onSuccess {
+                        D.info("Documents submitted")
                         self.markCompleted(.success(.processing(.documentUpload)), completion)
                     }.onError {
+                        D.error($0)
                         self.markCompleted($0, completion)
                     }
                 }
             } catch {
+                D.error(error)
                 self.markCompleted(.wrap(.unknown, error), completion)
             }
         }
@@ -319,17 +356,22 @@ public class WDOVerificationService {
     /// - Parameter completion: Callback with the result.
     public func presenceCheckInit(completion: @escaping (Result<[String: Any], Fail>) -> Void) {
         
+        D.debug("Initiating presence check.")
+        
         guard let processId = guardProcessId(completion) else {
             return
         }
         
         api.identityVerification.presenceCheckInit(processId: processId) { [weak self] result in
-            guard let self = self else {
+            guard let self else {
+                completion(.failure(.init(.init(reason: .unknown))))
                 return
             }
             result.onSuccess {
+                D.info("Presence check initiated.")
                 self.markCompleted(.success($0.attributes), completion)
             }.onError {
+                D.error($0)
                 self.markCompleted($0, completion)
             }
         }
@@ -340,17 +382,22 @@ public class WDOVerificationService {
     /// - Parameter completion: Callback with the result.
     public func presenceCheckSubmit(completion: @escaping (Result<Success, Fail>) -> Void) {
         
+        D.debug("Marking presence check finished.")
+        
         guard let processId = guardProcessId(completion) else {
             return
         }
         
         api.identityVerification.presenceCheckSubmit(processId: processId) { [weak self] result in
-            guard let self = self else {
+            guard let self else {
+                completion(.failure(.init(.init(reason: .unknown))))
                 return
             }
             result.onSuccess {
+                D.info("Presence check submitted")
                 self.markCompleted(.success(.processing(.verifyingPresence)), completion)
             }.onError {
+                D.error($0)
                 self.markCompleted($0, completion)
             }
         }
@@ -361,17 +408,22 @@ public class WDOVerificationService {
     /// - Parameter completion: Callback with the result.
     public func restartVerification(completion: @escaping (Result<Success, Fail>) -> Void) {
         
+        D.debug("Restarting verification process.")
+        
         guard let processId = guardProcessId(completion) else {
             return
         }
         
         api.identityVerification.cleanup(processId: processId) { [weak self] result in
-            guard let self = self else {
+            guard let self else {
+                completion(.failure(.init(.init(reason: .unknown))))
                 return
             }
             result.onSuccess {
+                D.info("Verification process restarted.")
                 self.markCompleted(.success(.intro), completion)
             }.onError {
+                D.error($0)
                 self.markCompleted($0, completion)
             }
         }
@@ -382,17 +434,22 @@ public class WDOVerificationService {
     /// - Parameter completion: Callback with the result.
     public func cancelWholeProcess(completion: @escaping (Result<Void, Fail>) -> Void) {
         
+        D.debug("Canceling whole verification process.")
+        
         guard let processId = guardProcessId(completion) else {
             return
         }
         
         api.onboarding.cancel(processId: processId) { [weak self] result in
-            guard let self = self else {
+            guard let self else {
+                completion(.failure(.init(.init(reason: .unknown))))
                 return
             }
             result.onSuccess {
+                D.info("Verification process was canceled.")
                 self.markCompleted(.success(()), completion)
             }.onError {
+                D.error($0)
                 self.markCompleted($0, completion)
             }
         }
@@ -405,27 +462,34 @@ public class WDOVerificationService {
     ///   - completion: Callback with the result.
     public func verifyOTP(otp: String, completion: @escaping (Result<Success, Fail>) -> Void) {
         
+        D.debug("Verifying OTP - \(otp)")
+        
         guard let processId = guardProcessId(completion) else {
             return
         }
         
         api.identityVerification.verifyOTP(processId: processId, otp: otp) { [weak self] result in
             
-            guard let self = self else {
+            guard let self else {
+                completion(.failure(.init(.init(reason: .unknown))))
                 return
             }
             
             result.onSuccess { data in
                 if data.verified {
+                    D.info("OTP verified")
                     self.markCompleted(.success(.processing(.other)), completion)
                 } else {
                     if data.remainingAttempts > 0 && data.expired == false {
+                        D.error("OTP not verified. Try again")
                         self.markCompleted(.success(.otp(data.remainingAttempts)), completion)
                     } else {
+                        D.error("OTP not verified.")
                         self.markCompleted(.failure(.init(.init(reason: .wdo_verification_otpFailed))), completion)
                     }
                 }
             }.onError {
+                D.error($0)
                 self.markCompleted($0, completion)
             }
         }
@@ -438,14 +502,24 @@ public class WDOVerificationService {
     /// - Parameter completion: Callback with the result.
     public func resendOTP(completion: @escaping (Result<Void, Fail>) -> Void) {
         
+        D.debug("Resending verification OTP.")
+        
         guard let processId = guardProcessId(completion) else {
             return
         }
         
-        api.identityVerification.resendOTP(processId: processId) { result in
+        api.identityVerification.resendOTP(processId: processId) { [weak self] result in
+            
+            guard let self else {
+                completion(.failure(.init(.init(reason: .unknown))))
+                return
+            }
+            
             result.onSuccess {
+                D.info("Verification OTP resend success.")
                 self.markCompleted(.success(()), completion)
             }.onError {
+                D.error($0)
                 self.markCompleted($0, completion)
             }
         }
@@ -459,14 +533,25 @@ public class WDOVerificationService {
     /// - Parameter completion: Callback with the result.
     public func getOTP(completion: @escaping (Result<String, Fail>) -> Void) {
         
+        D.debug("Retrieving verification OTP via non-production endpoint.")
+        
         guard let processId = guardProcessId(completion) else {
             return
         }
         
-        api.onboarding.getOTP(processId: processId, type: .userVerification) { result in
+        api.onboarding.getOTP(processId: processId, type: .userVerification) { [weak self] result in
+            
+            guard let self else {
+                completion(.failure(.init(.init(reason: .unknown))))
+                return
+            }
+            
             result.onSuccess {
+                D.info("Verification OTP retrieved.")
+                D.debug("  - \($0)")
                 self.markCompleted(.success($0), completion)
             }.onError {
+                D.error($0)
                 self.markCompleted($0, completion)
             }
         }
@@ -517,6 +602,7 @@ public class WDOVerificationService {
     
     private func guardProcessId<T>(_ completion: (Result<T, Fail>) -> Void) -> String? {
         guard let processId = lastStatus?.processId else {
+            D.error("Process id not available - did you start the verification process and fetched the status?")
             markCompleted(.failure(.init(.init(reason: .wdo_verification_missingStatus))), completion)
             return nil
         }
@@ -528,17 +614,21 @@ public class WDOVerificationService {
             api.networking.powerAuth.fetchActivationStatus { [weak self] status, _ in
                 
                 guard let self else {
+                    completion(.failure(.init(.init(reason: .unknown))))
                     return
                 }
                 
                 if let status, status.state != .active {
+                    D.error("PowerAuth status is not active (status\(status.state)) - notifying the delegate and returning and error.")
                     self.delegate?.powerAuthActivationStatusChanged(self, status: status)
                     self.markCompleted(.failure(.init(.init(reason: .wdo_verification_activationNotActive, error: error))), completion)
                 } else {
+                    D.error(error)
                     self.markCompleted(.failure(.init(error)), completion)
                 }
             }
         } else {
+            D.error(error)
             markCompleted(.failure(.init(error)), completion)
         }
     }
@@ -583,9 +673,9 @@ private extension Result where Success == WDOVerificationService.Success, Failur
 }
 
 // Internal status that works as a translation layer between server API and SDK API
-enum VerificationStatus {
+enum VerificationStatus: CustomStringConvertible {
     
-    enum Reason {
+    enum Reason: CustomStringConvertible {
         case unknown
         case documentUpload
         case documentVerification
@@ -594,6 +684,19 @@ enum VerificationStatus {
         case clientVerification
         case clientAccepted
         case verifyingPresence
+        
+        var description: String {
+            return switch self {
+            case .unknown: "unknown"
+            case .documentUpload: "documentUpload"
+            case .documentVerification: "documentVerification"
+            case .documentAccepted: "documentAccepted"
+            case .documentsCrossVerification: "documentsCrossVerification"
+            case .clientVerification: "clientVerification"
+            case .clientAccepted: "clientAccepted"
+            case .verifyingPresence: "verifyingPresence"
+            }
+        }
     }
     
     case intro
@@ -636,5 +739,19 @@ enum VerificationStatus {
         case (.completed, .rejected):                   return .rejected
         default: D.fatalError("Unknown phase/status combo: \(response.phase?.rawValue ?? "nil"), \(response.status.rawValue)")
         }
+    }
+    
+    var description: String {
+        let name = switch self {
+        case .intro: "intro"
+        case .documentScan: "documentScan"
+        case .statusCheck(let reason): "statusCheck(\(reason)"
+        case .presenceCheck: "presenceCheck"
+        case .otp: "otp"
+        case .failed: "failed"
+        case .rejected: "rejected"
+        case .success: "success"
+        }
+        return "VerificationStatus.\(name)"
     }
 }

@@ -234,10 +234,11 @@ For example, your system might require a national ID and one additional document
 
 ```swift
 let verification: WDOVerificationService // configured instance
-verification.consentApprove { result in 
+let documentsToScan: [WDODocumentType] = [.idCard, .driversLicense]
+verification.documentsSetSelectedTypes(types: documentsToScan) { result in 
     switch result {
     case .success(let state):
-        // state will be in the `documentsToScanSelect` case here - display the document selector
+        // state will be in the `scanDocument` case here - display the document scanner
         break
     case .failure(let error):
         if let state = error.state {

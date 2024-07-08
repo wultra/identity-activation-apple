@@ -1,5 +1,5 @@
 //
-// Copyright 2023 Wultra s.r.o.
+// Copyright 2020 Wultra s.r.o.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,45 +16,74 @@
 
 import Foundation
 
-/// Simple logging facility.
+/// WDOLogger provides simple logging facility.
+///
+/// Note that HTTP logs are managed by the underlying Networking library (via `WPNLogger` class).
 public class WDOLogger {
     
-    /// Defines verbose level for this simple debugging facility.
+    /// Verbose level of the logger.
     public enum VerboseLevel: Int {
         /// Silences all messages.
         case off = 0
-        /// Only errors will be printed to the debug console.
+        /// Only errors will be logged.
         case errors = 1
-        /// Errors and warnings will be printed to the debug console.
+        /// Errors and warnings will be logged.
         case warnings = 2
-        /// All messages will be printed to the debug console.
-        case all = 3
+        /// Error, warning and info messages will be logged.
+        case info = 3
+        /// All messages will logged - including debug messages
+        case debug = 4
     }
     
-    /// Current verbose level. `warnings` as a default.
+    /// Logger delegate
+    public static weak var delegate: WDOLoggerDelegate?
+    
+    /// Current verbose level. `warnings` by default
     public static var verboseLevel: VerboseLevel = .warnings
     
-    /// Character limit for single log message. Default is 12 000. Unlimited when nil
+    /// Character limit for single log message. Default is `12 000`. Unlimited when nil
     public static var characterLimit: Int? = 12_000
     
-    /// Prints simple message to the debug console.
-    static func print(_ message: @autoclosure () -> String) {
-        if verboseLevel == .all {
-            Swift.print("[WDO] \(message().limit(characterLimit))")
-        }
-    }
-
-    /// Prints warning message to the debug console.
-    static func warning(_ message: @autoclosure () -> String) {
-        if verboseLevel.rawValue >= VerboseLevel.warnings.rawValue {
-            Swift.print("[WDO] WARNING: \(message().limit(characterLimit))")
-        }
+    /// Prints simple message to the system console.
+    static func debug(_ message: @autoclosure () -> String) {
+        log(message(), level: .debug)
     }
     
-    /// Prints error message to the debug console.
+    /// Prints simple message to the system console.
+    static func info(_ message: @autoclosure () -> String) {
+        log(message(), level: .info)
+    }
+
+    /// Prints warning message to the system console.
+    static func warning(_ message: @autoclosure () -> String) {
+        log(message(), level: .warning)
+    }
+    
+    /// Prints error message to the system console.
     static func error(_ message: @autoclosure () -> String) {
-        if verboseLevel != .off {
-            Swift.print("[WDO] ERROR: \(message().limit(characterLimit))")
+        log(message(), level: .error)
+    }
+    
+    /// Prints error message to the system console.
+    static func error(_ e: Error) {
+        log(e.localizedDescription, level: .error)
+    }
+    
+    private static func log(_ message: @autoclosure () -> String, level: WDOLogLevel) {
+        let levelAllowed = level.minVerboseLevel.rawValue <= verboseLevel.rawValue
+        let forceReport = delegate?.wdoFollowVerboseLevel == false
+        guard levelAllowed || forceReport else {
+            // not logging
+            return
+        }
+        
+        let msg = message().limit(characterLimit)
+        
+        if levelAllowed {
+            print("[WDO:\(level.logName)] \(msg)")
+        }
+        if levelAllowed || forceReport {
+            delegate?.wdoLog(message: msg, logLevel: level)
         }
     }
     
@@ -79,6 +108,55 @@ public class WDOLogger {
         Swift.fatalError(message(), file: file, line: line)
     }
     #endif
+    
+    private init() { } // we don't want to provide constructor
+}
+
+/// Delegate that can further process logs from the library
+public protocol WDOLoggerDelegate: AnyObject {
+    
+    /// If the delegate should follow selected verbosity level.
+    ///
+    /// When set to true, then (for example) if `errors` is selected as a `verboseLevel`, only `error` logLevel will be called.
+    /// When set to false, all methods might be called no matter the selected `verboseLevel`.
+    var wdoFollowVerboseLevel: Bool { get }
+    
+    /// Log was recorded
+    /// - Parameters:
+    ///   - message: Message of the log
+    ///   - logLevel: Log level
+    func wdoLog(message: String, logLevel: WDOLogLevel)
+}
+
+/// Level of the log
+public enum WDOLogLevel {
+    /// Debug logs. Might contain sensitive data like body of the request etc.
+    /// You should only use this level during development.
+    case debug
+    /// Regular library logic logs
+    case info
+    /// Non-critical warning
+    case warning
+    /// Error happened
+    case error
+    
+    fileprivate var minVerboseLevel: WDOLogger.VerboseLevel {
+        return switch self {
+        case .debug: .debug
+        case .info: .info
+        case .warning: .warnings
+        case .error: .errors
+        }
+    }
+    
+    fileprivate var logName: String {
+        return switch self {
+        case .debug: "DEBUG"
+        case .info: "INFO"
+        case .warning: "WARNING"
+        case .error: "ERROR"
+        }
+    }
 }
 
 private extension String {
