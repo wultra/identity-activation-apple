@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0 (July, 2024)
+
+-  `WDOLogger` now provides `delegate` property
+-  `WDOLogger.VerboseLevel` 
+    -  renamed `all` -> `debug` 
+    -  added an `info` option.
+
 ## 1.1.1 (Feb 29, 2024)
 
 -  `WDOActivationService` and `WDOVerificationService` initializers no longer throw exceptions.
