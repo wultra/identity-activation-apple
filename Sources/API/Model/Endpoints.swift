@@ -21,19 +21,19 @@ enum Endpoints {
     enum Onboarding {
         enum Start<TRequest: Codable> {
             typealias EndpointType = WPNEndpointBasic<WPNRequest<StartOnboardingRequest<TRequest>>, WPNResponse<ProcessResponse>>
-            static var endpoint: EndpointType { .init(endpointURLPath: "/api/onboarding/start") }
+            static var endpoint: EndpointType { .init(endpointURLPath: "/api/onboarding/start", e2ee: .applicationScope) }
         }
         enum Cancel {
             typealias EndpointType = WPNEndpointBasic<WPNRequest<ProcessRequest>, WPNResponseBase>
-            static var endpoint: EndpointType { .init(endpointURLPath: "/api/onboarding/cleanup") }
+            static var endpoint: EndpointType { .init(endpointURLPath: "/api/onboarding/cleanup", e2ee: .applicationScope) }
         }
         enum ResendOTP {
             typealias EndpointType = WPNEndpointBasic<WPNRequest<ProcessRequest>, WPNResponseBase>
-            static var endpoint: EndpointType { .init(endpointURLPath: "/api/onboarding/otp/resend") }
+            static var endpoint: EndpointType { .init(endpointURLPath: "/api/onboarding/otp/resend", e2ee: .applicationScope) }
         }
         enum GetStatus {
             typealias EndpointType = WPNEndpointBasic<WPNRequest<ProcessRequest>, WPNResponse<ProcessResponse>>
-            static var endpoint: EndpointType { .init(endpointURLPath: "/api/onboarding/status") }
+            static var endpoint: EndpointType { .init(endpointURLPath: "/api/onboarding/status", e2ee: .applicationScope) }
         }
     }
     enum Identification {
@@ -59,11 +59,11 @@ enum Endpoints {
         }
         enum DocumentScanSdkInit {
             typealias EndpointType = WPNEndpointSigned<WPNRequest<SDKInitRequest>, WPNResponse<SDKInitResponse>>
-            static var endpoint: EndpointType { .init(endpointURLPath: "/api/identity/document/init-sdk", uriId: "/api/identity/document/init-sdk") }
+            static var endpoint: EndpointType { .init(endpointURLPath: "/api/identity/document/init-sdk", uriId: "/api/identity/document/init-sdk", e2ee: .activationScope) }
         }
         enum SubmitDocuments {
             typealias EndpointType = WPNEndpointSignedWithToken<WPNRequest<DocumentSubmitRequest>, WPNResponseBase>
-            static var endpoint: EndpointType { .init(endpointURLPath: "/api/identity/document/submit", tokenName: "possession_universal") }
+            static var endpoint: EndpointType { .init(endpointURLPath: "/api/identity/document/submit", tokenName: "possession_universal", e2ee: .activationScope) }
         }
         enum DocumentsStatus {
             typealias EndpointType = WPNEndpointSignedWithToken<WPNRequest<ProcessRequest>, WPNResponse<DocumentStatusResponse>>
@@ -71,7 +71,7 @@ enum Endpoints {
         }
         enum PresenceCheckInit {
             typealias EndpointType = WPNEndpointSigned<WPNRequest<ProcessRequest>, WPNResponse<PresenceCheckInitResponse>>
-            static var endpoint: EndpointType { .init(endpointURLPath: "/api/identity/presence-check/init", uriId: "/api/identity/presence-check/init") }
+            static var endpoint: EndpointType { .init(endpointURLPath: "/api/identity/presence-check/init", uriId: "/api/identity/presence-check/init", e2ee: .activationScope) }
         }
         enum PresenceCheckSubmit {
             typealias EndpointType = WPNEndpointSigned<WPNRequest<ProcessRequest>, WPNResponseBase>
@@ -83,7 +83,7 @@ enum Endpoints {
         }
         enum VerifyOTP {
             typealias EndpointType = WPNEndpointBasic<WPNRequest<VerifyOTPRequest>, WPNResponse<VerifyOTPResponse>>
-            static var endpoint: EndpointType { .init(endpointURLPath: "/api/identity/otp/verify") }
+            static var endpoint: EndpointType { .init(endpointURLPath: "/api/identity/otp/verify", e2ee: .activationScope) }
         }
     }
 }

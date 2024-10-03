@@ -77,7 +77,6 @@ class Networking {
             return networking.post(
                 data: Endpoint.EndpointType.RequestData(.init(identification: credentials)),
                 to: Endpoint.endpoint,
-                encryptedWith: powerAuth.eciesEncryptorForApplicationScope(),
                 completion: { result, error in
                     assert(Thread.isMainThread)
                     if let data = result?.responseObject {
@@ -104,7 +103,6 @@ class Networking {
             return networking.post(
                 data: Endpoint.EndpointType.RequestData(.init(processId: processId)),
                 to: Endpoint.endpoint,
-                encryptedWith: powerAuth.eciesEncryptorForApplicationScope(),
                 completion: { (result: WPNResponseBase?, error: WPNError?) in
                     assert(Thread.isMainThread)
                     if result?.status == .Ok {
@@ -131,7 +129,6 @@ class Networking {
             return networking.post(
                 data: Endpoint.EndpointType.RequestData(.init(processId: processId)),
                 to: Endpoint.endpoint,
-                encryptedWith: powerAuth.eciesEncryptorForApplicationScope(),
                 completion: { result, error in
                     assert(Thread.isMainThread)
                     if let data = result?.responseObject {
@@ -162,7 +159,6 @@ class Networking {
             return networking.post(
                 data: Endpoint.EndpointType.RequestData(.init(processId: processId)),
                 to: Endpoint.endpoint,
-                encryptedWith: powerAuth.eciesEncryptorForApplicationScope(),
                 completion: { (result: WPNResponseBase?, error: WPNError?) in
                     assert(Thread.isMainThread)
                     if result?.status == .Ok {
@@ -330,7 +326,6 @@ class Networking {
                 data: Endpoint.EndpointType.RequestData(.init(processId: processId, attributes: .init(challengeToken: challenge))),
                 signedWith: .possession(),
                 to: Endpoint.endpoint,
-                encryptedWith: powerAuth.eciesEncryptorForActivationScope(),
                 completion: { (result: WPNResponse<SDKInitResponse>?, error: WPNError?) in
                     assert(Thread.isMainThread)
                     if let token = result?.responseObject?.attributes.responseToken {
@@ -360,7 +355,6 @@ class Networking {
                 data: Endpoint.EndpointType.RequestData(data),
                 signedWith: .possession(),
                 to: Endpoint.endpoint,
-                encryptedWith: powerAuth.eciesEncryptorForActivationScope(),
                 timeoutInterval: 180,
                 progressCallback: progressCallback,
                 completion: { result, error in
@@ -417,7 +411,6 @@ class Networking {
                 data: Endpoint.EndpointType.RequestData(.init(processId: processId)),
                 signedWith: .possession(),
                 to: Endpoint.endpoint,
-                encryptedWith: powerAuth.eciesEncryptorForActivationScope(),
                 completion: { result, error in
                     assert(Thread.isMainThread)
                     if let data = result?.responseObject {
@@ -497,7 +490,6 @@ class Networking {
             return networking.post(
                 data: Endpoint.EndpointType.RequestData(.init(processId: processId, otpCode: otp)),
                 to: Endpoint.endpoint,
-                encryptedWith: powerAuth.eciesEncryptorForActivationScope(),
                 completion: { result, error in
                     assert(Thread.isMainThread)
                     if let data = result?.responseObject {
@@ -530,7 +522,6 @@ extension Networking.Onboarding {
         return networking.post(
             data: Endpoint.EndpointType.RequestData(.init(processId: processId, otpType: type)),
             to: Endpoint.endpoint,
-            encryptedWith: powerAuth.eciesEncryptorForApplicationScope(),
             completion: { result, error in
                 assert(Thread.isMainThread)
                 if let data = result?.responseObject {

@@ -12,6 +12,6 @@ Pod::Spec.new do |s|
   s.ios.deployment_target = '13.0'
   
   s.source_files          = 'Sources/**/*.swift'
-  s.dependency 'WultraPowerAuthNetworking', '~> 1.4.0'
+  s.dependency 'WultraPowerAuthNetworking', '~> 1.5.0'
 
 end

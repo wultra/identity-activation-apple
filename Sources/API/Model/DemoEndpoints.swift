@@ -27,7 +27,7 @@ extension Endpoints {
     // this endpoint is available only in our own implementation and should be available only for debug
     enum GetOTP {
         typealias EndpointType = WPNEndpointBasic<WPNRequest<OTPDetailRequest>, WPNResponse<OTPDetailResponse>>
-        static var endpoint: EndpointType { WPNEndpointBasic(endpointURLPath: "/api/onboarding/otp/detail") }
+        static var endpoint: EndpointType { WPNEndpointBasic(endpointURLPath: "/api/onboarding/otp/detail", e2ee: .applicationScope) }
     }
 }
 
