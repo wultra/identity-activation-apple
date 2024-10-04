@@ -26,7 +26,7 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/wultra/digital-onboarding-apple.git", .from("1.0.0"))
+        .package(url: "https://github.com/wultra/digital-onboarding-apple.git", .from("1.3.0"))
     ],
     targets: [
         .target(
@@ -48,9 +48,11 @@ pod 'WultraDigitalOnboarding'
 ## Guaranteed PowerAuth Compatibility
 
 | WDO SDK | PowerAuth SDK |  
-|---|---|
-| `1.1.x` | `1.8.x` |
-| `1.0.x` | `1.7.x` |
+|---------|---------      |
+| `1.3.x` | `1.9.x`       |
+| `1.2.x` | `1.8.x`       |
+| `1.1.x` | `1.8.x`       |
+| `1.0.x` | `1.7.x`       |
 
 ## Xcode Compatibility
 

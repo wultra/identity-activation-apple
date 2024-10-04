@@ -12,6 +12,10 @@ disabled_rules:
   - type_body_length
   - nesting
   - inclusive_language
+excluded:
+  - Carthage
+  - Deploy
+  - build
 type_name:
   max_length: 50
   excluded:

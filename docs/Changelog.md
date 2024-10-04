@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.0 (October, 2024)
+
+- PowerAuth "server stack" `1.9+` is now required
+- `powerauth-mobile-sdk` v `1.9.x` is now required
+- `networking-apple` v `1.5.x` is now required
+
 ## 1.2.0 (July, 2024)
 
 -  `WDOLogger` now provides `delegate` property
